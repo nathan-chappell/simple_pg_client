@@ -1,6 +1,6 @@
 const { parseInt16, parseInt32, parseBytes, parseString } = require("./data_types");
 
-async function* parseArray(readable, parseLength, parseItem) {
+async function parseArray(readable, parseLength, parseItem) {
     const length = await parseLength(readable);
     const result = [];
     for (let i = 0; i < length; ++i) result.push(await parseItem(readable));
@@ -9,47 +9,43 @@ async function* parseArray(readable, parseLength, parseItem) {
 
 const parseCountBytes = (count) => (readable) => parseBytes(readable, count);
 const parseOneByte = (readable) => parseBytes(readable, 1).then(bytes => bytes[0]);
+const parseByteArray = (readable) => parseArray(readable, parseInt32, parseOneByte);
 
-parseItemMap = {
+const parseTypeMap = {
     Byte: parseOneByte,
     Byte1: parseOneByte,
     Byte4: parseCountBytes(4),
     Int16: parseInt16,
     Int32: parseInt32,
     String: parseString,
+    ['Int16[]']: (readable) => parseArray(readable, parseInt16, parseInt16),
+    ['Byte[]']: parseByteArray,
+    ['Byte[][]']: (readable) => parseArray(readable, parseInt32, parseByteArray),
 };
 
-function getFormatParser(format) {
-    const { type, arraySpec, expectedSpec } = format.match(
-        /^(?<type>Int16|Int32|Byte(1|4)?|String)(?<arraySpec>\[\]){0,2}(\('?(?<expectedSpec>[^)']*)'?\))?/
-    ).groups;
-    const parseItem = parseItemMap[type];
-    let parser;
-    if (!parseItem) throw new Error(`No item-parser found for type: ${type}`);
-    if (!arraySpec) {
-        parser = parseItem;
-    } else {
-        const _parseItem = getFormatParser(`${type}${arraySpec.replace("[]", "")}`);
-        const _parseLength = type == "Byte" ? parseInt32 : parseInt16;
-        parser = (readable) => parseArray(readable, _parseLength, _parseItem);
-    }
-    let expected = null;
+const getExpected = (expectedSpec, type) => {
     if (expectedSpec) {
         switch (type) {
-            case 'Byte1':
-                expected = expectedSpec.charCodeAt(0);
-                break;
-            case 'Int32':
-                expected = parseInt(expectedSpec);
-                break;
-            default:
-                throw new Error(`No conversion for expected type ${type}`)
+            case 'Byte1': return expectedSpec.charCodeAt(0);
+            case 'Int32': return parseInt(expectedSpec);
+            default: throw new Error(`No conversion for expected type ${type}`)
         }
+    } else {
+        return null;
     }
-    return { parser, expected };
 }
 
-function generateParser(messageFormat) {
+function getFormatParser(format) {
+    const { baseType, arraySpec, expectedSpec } = format.match(
+        /^(?<baseType>Int16|Int32|Byte(1|4)?|String)(?<arraySpec>\[\]){0,2}(\('?(?<expectedSpec>[^)']*)'?\))?/
+    ).groups;
+    const type = arraySpec ? `${baseType}${arraySpec}` : baseType;
+    if (!(type in parseTypeMap)) throw new Error(`No parser found for type: ${type}`);
+    const expected = getExpected(expectedSpec, type)
+    return { type, expected };
+}
+
+function getParseInfo(messageFormat) {
     const { name, formatstring } = messageFormat.match(/^(?<name>\w+): (?<formatstring>.*)/).groups;
     const formats = formatstring.split(/\s+/);
     const formatParsers = formats.map(getFormatParser);
@@ -57,5 +53,6 @@ function generateParser(messageFormat) {
 
 module.exports = {
     getFormatParser,
-    generateParser,
+    getParseInfo,
+    parseTypeMap,
 };
