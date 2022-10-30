@@ -1,6 +1,6 @@
-const { Readable } = require('node:stream');
+const { Readable } = require("node:stream");
 
-const delay = t => new Promise(res => setTimeout(res, t));
+const delay = (t) => new Promise((res) => setTimeout(res, t));
 
 /**
  * @callback Reader
@@ -9,10 +9,10 @@ const delay = t => new Promise(res => setTimeout(res, t));
  */
 
 /**
- * 
- * @param {Readable} readable 
- * @param {Reader} reader 
- * @param {number} time 
+ *
+ * @param {Readable} readable
+ * @param {Reader} reader
+ * @param {number} time
  */
 async function poll(readable, reader, time = 10) {
     while (!readable.closed) {
@@ -27,20 +27,71 @@ async function poll(readable, reader, time = 10) {
 }
 
 /**
- * @param {Readable} readable
+ *
+ * @param {Buffer} bytes
  */
-function parseInt16(readable) {
-    return poll(readable, _stream => _stream.read(2)).then(bytes => (bytes[0] << 8) | bytes[1]);
+function bytesToInt16(bytes) {
+    const getVal = (i) => (bytes[i * 2 + 0] << 8) | bytes[i * 2 + 1];
+    if (bytes.length === 2) {
+        return getVal(0);
+    } else {
+        return [...new Array(bytes.length >> 1)].map((_, i) => getVal(i));
+    }
 }
 
 /**
- * @param {Readable} stream
+ *
+ * @param {Buffer} bytes
  */
-function parseInt32(stream) {
-    return poll(stream, _stream => _stream.read(4).then(bytes => (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[0]));
+function bytesToInt32(bytes) {
+    const getVal = (i) =>
+        (bytes[4 * i + 0] << 24) | (bytes[4 * i + 1] << 16) | (bytes[4 * i + 2] << 8) | bytes[4 * i + 3];
+    if (bytes.length === 4) {
+        return getVal(0);
+    } else {
+        return [...new Array(bytes.length >> 2)].map((_, i) => getVal(i));
+    }
+}
+
+/**
+ * @param {Readable} readable
+ */
+function parseInt16(readable, length = 1) {
+    return poll(readable, (_stream) => _stream.read(2 * length)).then(bytesToInt16);
+}
+
+/**
+ * @param {Readable} readable
+ */
+function parseInt32(readable, length = 1) {
+    return poll(readable, (_stream) => _stream.read(4 * length)).then(bytesToInt32);
+}
+
+/**
+ * @param {Readable} readable
+ */
+function parseBytes(readable, length = 1) {
+    return poll(readable, (_stream) => _stream.read(length)).then(Array.from);
+}
+
+/**
+ * @param {Readable} readable
+ */
+async function parseString(readable) {
+    chars = [];
+    while (!readable.closed) {
+        nextChar = await poll(readable, (_stream) => _stream.read(1));
+        if (nextChar[0] === 0) {
+            return chars.join("");
+        } else {
+            chars.push(nextChar.toString("ascii"));
+        }
+    }
 }
 
 module.exports = {
     parseInt16,
     parseInt32,
+    parseBytes,
+    parseString,
 };
