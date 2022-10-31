@@ -31,10 +31,11 @@ function getArrayChunk(messageSpec) {
  * @param {Array.<MessageSpec>} message
  */
 function getBuffer(type, message) {
-    if (type.length > 1) throw new Error(`The type of message must be a string of length 1, got ${type}`)
-    typeChunk = [type.charCodeAt(0)]
+    if (type !== null && type.length > 1) throw new Error(`The type of message must be a string of length 1, got ${type}`)
+    typeChunk = type === null ? [] : [type.charCodeAt(0)]
     messageChunk = message.map(getArrayChunk).flat(3)
-    lengthChunk = int32ToBytes(typeChunk.length + messageChunk.length + 4)
+    // lengthChunk = int32ToBytes(typeChunk.length + messageChunk.length + 4)
+    lengthChunk = int32ToBytes(messageChunk.length + 4)
     return Buffer.from(Uint8Array.from([typeChunk, lengthChunk, messageChunk].flat(3)), { objectMode: false })
 }
 
