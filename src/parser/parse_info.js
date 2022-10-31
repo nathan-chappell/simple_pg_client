@@ -1,4 +1,4 @@
-const { parseInt16, parseInt32, parseBytes, parseString } = require("./data_types")
+const { readInt16, readInt32, readBytes, readString } = require("./data_types")
 
 /**
  * @typedef ParseInfo
@@ -15,20 +15,20 @@ async function parseArray(readable, parseLength, parseItem) {
     return result
 }
 
-const parseCountBytes = (count) => (readable) => parseBytes(readable, count)
-const parseOneByte = (readable) => parseBytes(readable, 1).then((bytes) => bytes[0])
-const parseByteArray = (readable) => parseArray(readable, parseInt32, parseOneByte)
+const parseCountBytes = (count) => (readable) => readBytes(readable, count)
+const parseOneByte = (readable) => readBytes(readable, 1).then((bytes) => bytes[0])
+const parseByteArray = (readable) => parseArray(readable, readInt32, parseOneByte)
 
 const parseTypeMap = {
     Byte: parseOneByte,
     Byte1: parseOneByte,
     Byte4: parseCountBytes(4),
-    Int16: parseInt16,
-    Int32: parseInt32,
-    String: parseString,
-    ["Int16[]"]: (readable) => parseArray(readable, parseInt16, parseInt16),
+    Int16: readInt16,
+    Int32: readInt32,
+    String: readString,
+    ["Int16[]"]: (readable) => parseArray(readable, readInt16, readInt16),
     ["Byte[]"]: parseByteArray,
-    ["Byte[][]"]: (readable) => parseArray(readable, parseInt32, parseByteArray),
+    ["Byte[][]"]: (readable) => parseArray(readable, readInt32, parseByteArray),
 }
 
 const getExpected = (expectedSpec, type) => {

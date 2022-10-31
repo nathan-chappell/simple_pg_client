@@ -56,28 +56,28 @@ function bytesToInt32(bytes) {
 /**
  * @param {Readable} readable
  */
-function parseInt16(readable, length = 1) {
+function readInt16(readable, length = 1) {
     return poll(readable, (_stream) => _stream.read(2 * length)).then(bytesToInt16);
 }
 
 /**
  * @param {Readable} readable
  */
-function parseInt32(readable, length = 1) {
+function readInt32(readable, length = 1) {
     return poll(readable, (_stream) => _stream.read(4 * length)).then(bytesToInt32);
 }
 
 /**
  * @param {Readable} readable
  */
-function parseBytes(readable, length = 1) {
+function readBytes(readable, length = 1) {
     return poll(readable, (_stream) => _stream.read(length)).then(Array.from);
 }
 
 /**
  * @param {Readable} readable
  */
-async function parseString(readable) {
+async function readString(readable) {
     chars = [];
     while (!readable.closed) {
         nextChar = await poll(readable, (_stream) => _stream.read(1));
@@ -90,8 +90,8 @@ async function parseString(readable) {
 }
 
 module.exports = {
-    parseInt16,
-    parseInt32,
-    parseBytes,
-    parseString,
+    readInt16,
+    readInt32,
+    readBytes,
+    readString,
 };

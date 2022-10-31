@@ -16,7 +16,6 @@ function makeParseInfoTreeRoot() {
 }
 
 /**
- *
  * @param {ParseInfoTree} parseInfoTree
  * @param {ParseInfo[]} parseInfos
  * @param {string} name
@@ -41,7 +40,6 @@ function insertIntoParseInfoTree(parseInfoTree, parseInfos, name) {
 }
 
 /**
- * 
  * @param {string} messageFormat 
  * @returns {{name: string, formats: Array.<ParseInfo>}}
  */
@@ -53,7 +51,6 @@ function getFormatInfo(messageFormat) {
 
 
 /**
- * 
  * @param {Array.<string>} formatSpec 
  * @returns {ParseInfoTree}
  */
@@ -67,7 +64,6 @@ function makeParseInfoTree(formatStrings) {
 }
 
 /**
- * 
  * @param {ParseInfoTree} parseInfoTree 
  * @param {string | number | null} value 
  */
