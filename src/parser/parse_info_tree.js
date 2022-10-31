@@ -5,6 +5,7 @@ const { getParseInfo } = require('./parse_info.js')
  * @type {object}
  * @property {string | null} childType
  * @property {Object.<string | number | null, ParseInfoTree>} childrenByValue
+ * @property {string?} result
  */
 
 /**
@@ -65,6 +66,18 @@ function makeParseInfoTree(formatStrings) {
     return root
 }
 
+/**
+ * 
+ * @param {ParseInfoTree} parseInfoTree 
+ * @param {string | number | null} value 
+ */
+function nextParseInfoTree(parseInfoTree, value) {
+    const nextTree = parseInfoTree.childrenByValue[value] || parseInfoTree.childrenByValue[null];
+    if (!nextTree) throw new Error(`no child for value ${value} in ${JSON.stringify(parseInfoTree, null, 2)}`)
+    return nextTree;
+}
+
 module.exports = {
     makeParseInfoTree,
+    nextParseInfoTree,
 }
