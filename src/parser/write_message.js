@@ -46,8 +46,10 @@ function getBuffer(type, message) {
  */
 function writeMessage(writable, type, message) {
     const buffer = getBuffer(type, message)
+    // console.log(`writeMessage: ${buffer.toString('hex')}`)
     let res
     const promise = new Promise(_res => { res = _res })
+    // writable.write(buffer, e => res(e))
     writable.write(buffer, e => res(e))
     return promise.then(e => { if (e) { throw e } })
 }

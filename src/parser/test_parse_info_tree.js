@@ -13,57 +13,57 @@ const expectedParseTreeJson = `{
             "childrenByValue": {
                 "0": {
                     "childType": "Byte[]",
-                    "childrenByValue": {
-                        "null": {
-                            "childType": null,
-                            "childrenByValue": {},
-                            "result": "A1"
-                        }
+                    "childrenByValue": {},
+                    "defaultChild": {
+                        "childType": null,
+                        "childrenByValue": {},
+                        "defaultChild": null,
+                        "result": "A1"
                     }
                 },
                 "1": {
                     "childType": "Byte[]",
-                    "childrenByValue": {
-                        "null": {
-                            "childType": null,
-                            "childrenByValue": {},
-                            "result": "A2"
-                        }
+                    "childrenByValue": {},
+                    "defaultChild": {
+                        "childType": null,
+                        "childrenByValue": {},
+                        "defaultChild": null,
+                        "result": "A2"
                     }
                 }
-            }
+            },
+            "defaultChild": null
         },
         "66": {
             "childType": "Int32",
-            "childrenByValue": {
-                "null": {
-                    "childType": "Byte[]",
-                    "childrenByValue": {
-                        "null": {
-                            "childType": null,
-                            "childrenByValue": {},
-                            "result": "B"
-                        }
-                    }
+            "childrenByValue": {},
+            "defaultChild": {
+                "childType": "Byte[]",
+                "childrenByValue": {},
+                "defaultChild": {
+                    "childType": null,
+                    "childrenByValue": {},
+                    "defaultChild": null,
+                    "result": "B"
                 }
             }
         },
         "67": {
             "childType": "Int32",
-            "childrenByValue": {
-                "null": {
-                    "childType": "Int16[]",
-                    "childrenByValue": {
-                        "null": {
-                            "childType": null,
-                            "childrenByValue": {},
-                            "result": "C"
-                        }
-                    }
+            "childrenByValue": {},
+            "defaultChild": {
+                "childType": "Int16[]",
+                "childrenByValue": {},
+                "defaultChild": {
+                    "childType": null,
+                    "childrenByValue": {},
+                    "defaultChild": null,
+                    "result": "C"
                 }
             }
         }
-    }
+    },
+    "defaultChild": null
 }`
 
 function test_makeParseInfoTree() {
@@ -74,8 +74,10 @@ function test_makeParseInfoTree() {
         "C: Byte1('C') Int32 Int16[]",
     ])
     // console.log(JSON.stringify(tree, null, 4))
-    if (JSON.stringify(tree, null, 4) !== expectedParseTreeJson)
+    if (JSON.stringify(tree, null, 4) !== expectedParseTreeJson) {
+        console.log(JSON.stringify(tree, null, 4))
         throw new Error("Characterization test failed, tree didn't match JSON")
+    }
 }
 
 function test_nextParseInfoTree() {

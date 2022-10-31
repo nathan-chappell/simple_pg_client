@@ -13,7 +13,7 @@ function bytesToInt16(bytes) {
     }
 }
 
-const lower8 = value => value % 256;
+const lower8 = value => value % 256
 
 /**
  * @param {number | Array.<number>} values
@@ -27,22 +27,22 @@ function int16ToBytes(values) {
     const bytes = []
     for (let i = 0; i < values.length; ++i)
         bytes.push(...getVal(i))
-    return bytes;
+    return bytes
 }
 
 /**
  * @param {number | Array.<number>} values
  * @returns {Array.<number>} bytes
  */
- function int32ToBytes(values) {
+function int32ToBytes(values) {
     if (typeof values == 'number') {
         values = [values]
     }
-    const getVal = (i) => [values[i] >> 8*3, values[i] >> 8*2, values[i] >> 8*1, values[i]].map(lower8)
+    const getVal = (i) => [values[i] >> 8 * 3, values[i] >> 8 * 2, values[i] >> 8 * 1, values[i]].map(lower8)
     const bytes = []
     for (let i = 0; i < values.length; ++i)
         bytes.push(...getVal(i))
-    return bytes;
+    return bytes
 }
 
 /**

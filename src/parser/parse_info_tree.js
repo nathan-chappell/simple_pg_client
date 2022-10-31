@@ -5,6 +5,7 @@ const { getParseInfo } = require('./parse_info.js')
  * @type {object}
  * @property {string | null} childType
  * @property {Object.<string | number | null, ParseInfoTree>} childrenByValue
+ * @property {ParseInfoTree | null} defaultChild
  * @property {string?} result
  */
 
@@ -12,7 +13,7 @@ const { getParseInfo } = require('./parse_info.js')
  * @returns ParseInfoTree
  */
 function makeParseInfoTreeRoot() {
-    return { childType: null, childrenByValue: {} }
+    return { childType: null, childrenByValue: {}, defaultChild: null }
 }
 
 /**
@@ -33,9 +34,18 @@ function insertIntoParseInfoTree(parseInfoTree, parseInfos, name) {
         throw new Error(
             `Insert requires all children to have the same type! ${parseInfoTree.childType} ${parseInfo.type}`
         )
-    const nextChild = Object.hasOwn(parseInfoTree.childrenByValue, parseInfo.expected)
-        ? parseInfoTree.childrenByValue[parseInfo.expected]
-        : (parseInfoTree.childrenByValue[parseInfo.expected] = makeParseInfoTreeRoot())
+    let nextChild
+    if (parseInfo.expected === null) {
+        if (parseInfoTree.defaultChild !== null) {
+            nextChild = parseInfoTree.defaultChild;
+        } else {
+            parseInfoTree.defaultChild = nextChild = makeParseInfoTreeRoot()
+        }
+    } else {
+        nextChild = Object.hasOwn(parseInfoTree.childrenByValue, parseInfo.expected)
+            ? parseInfoTree.childrenByValue[parseInfo.expected]
+            : (parseInfoTree.childrenByValue[parseInfo.expected] = makeParseInfoTreeRoot())
+    }
     insertIntoParseInfoTree(nextChild, parseInfos.slice(1), name)
 }
 
@@ -67,10 +77,11 @@ function makeParseInfoTree(formatStrings) {
  * @param {ParseInfoTree} parseInfoTree 
  * @param {string | number | null} value 
  */
-function nextParseInfoTree(parseInfoTree, value) {
-    const nextTree = parseInfoTree.childrenByValue[value] || parseInfoTree.childrenByValue[null];
-    if (!nextTree) throw new Error(`no child for value ${value} in ${JSON.stringify(parseInfoTree, null, 2)}`)
-    return nextTree;
+function nextParseInfoTree(parseInfoTree, value = null) {
+    const nextTree = parseInfoTree.childrenByValue[value] || parseInfoTree.defaultChild;
+    if (!nextTree) throw new Error(`no child for value ${value} in ${JSON.stringify(parseInfoTree)}`)
+    // if (!nextTree) throw new Error(`no child for value ${value} in ${JSON.stringify({ childType: nextTree.childType, childValues: Object.keys(nextTree.childrenByValue).join(', ') }, null, 2)}`)
+    return nextTree
 }
 
 module.exports = {
