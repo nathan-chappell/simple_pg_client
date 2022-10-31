@@ -1,7 +1,7 @@
 const exp = require("constants")
 const { writeMessage, getBuffer } = require("./write_message.js")
 
-function test_writeMessage() {
+function test_getBuffer() {
     const type = 'A'
     const message = [
         { type: "Byte1", value: 'B' },
@@ -27,7 +27,7 @@ function test_writeMessage() {
     }
 }
 
-function test_writeByteArray() {
+function test_getBufferByteArray() {
     const type = 'A'
     const message = [
         { type: "Byte[]", value: [0x12,0x34,0xab,0xcd,0xef] },
@@ -46,7 +46,7 @@ function test_writeByteArray() {
     }
 }
 
-function test_writeByteArrayArray() {
+function test_getBufferByteArrayArray() {
     const type = 'A'
     const message = [
         { type: "Byte[][]", value: [[0x12,0x34], [0xab,0xcd]] },
@@ -68,6 +68,6 @@ function test_writeByteArrayArray() {
     }
 }
 
-test_writeMessage()
-test_writeByteArray()
-test_writeByteArrayArray()
+test_getBuffer()
+test_getBufferByteArray()
+test_getBufferByteArrayArray()
