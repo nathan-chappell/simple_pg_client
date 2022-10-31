@@ -1,6 +1,6 @@
 const { Readable } = require("node:stream");
 
-const { getFormatParser, parseTypeMap } = require("./message_parser.js");
+const { getParseInfo: getFormatParser, parseTypeMap } = require("./message_parser.js");
 const { frontEndFormat } = require("./message_format");
 
 function test_getInt16FormatParser_valid() {
