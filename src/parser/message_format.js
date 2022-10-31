@@ -2,14 +2,6 @@
 // Int16[] arrays have length given by Int16
 // Byte[][] has first dimension given by Int16, and each "row" is a Byten array
 
-const { getParseInfo } = require('./message_parser.js');
-
-function getFormatInfo(messageFormat) {
-    const { name, formatstring } = messageFormat.match(/^(?<name>\w+): (?<formatstring>.*)/).groups;
-    const formats = formatstring.split(/\s+/).map(getParseInfo);
-    return { name, formats }
-}
-
 const frontEndFormat = [
     "Bind: Byte1('B') Int32 String String Int16[] Byte[][] Int16[]",
     "Close: Byte1('C') Int32 Byte1 String",
@@ -24,12 +16,12 @@ const frontEndFormat = [
     // "StartupMessage: Int32 Int32(196608) String[][] Byte(0)",
     "Sync: Byte1('S') Int32(4)",
     "Terminate: Byte1('X') Int32(4)"
-];
+]
 
 const frontAndBackEndFormat = [
     "CopyData: Byte1('d') Byte[]",
     "CopyDone: Byte1('c') Int32(4)"
-];
+]
 
 const backEndFormat = [
     "AuthenticationOk: Byte1('R') Int32(8) Int32(0)",
@@ -53,10 +45,9 @@ const backEndFormat = [
     "PortalSuspended: Byte1('s') Int32(4)",
     "ReadyForQuery: Byte1('Z') Int32(5) Byte1",
     "RowDescription: Byte1('T') Int32 Int16 String Int32 Int16 Int32 Int16 Int32 Int16"
-];
+]
 
 module.exports = {
-    getParseInfo,
     frontEndFormat,
     frontAndBackEndFormat,
     backEndFormat,

@@ -1,13 +1,13 @@
 const { Readable } = require("node:stream");
 
-const { getParseInfo: getFormatParser, parseTypeMap } = require("./message_parser.js");
-const { frontEndFormat } = require("./message_format");
+const { getParseInfo, parseTypeMap } = require("./parse_info.js");
+// const { frontEndFormat } = require("./message_format.js");
 
 function test_getInt16FormatParser_valid() {
     const value = 0x1234;
     const bytes = new Uint8Array([value >> 8, value % 256], { objectMode: false });
     const readable = Readable.from([bytes]);
-    return parseTypeMap[getFormatParser("Int16").type](readable).then((_value) => {
+    return parseTypeMap[getParseInfo("Int16").type](readable).then((_value) => {
         if (_value !== value) {
             throw new Error(`expected: ${value}, got: ${_value}`);
         }
@@ -18,7 +18,7 @@ function test_getByte1FormatParser_valid() {
     const value = "R".charCodeAt(0);
     const bytes = new Uint8Array([value], { objectMode: false });
     const readable = Readable.from([bytes]);
-    const formatParser = getFormatParser("Byte1('R')");
+    const formatParser = getParseInfo("Byte1('R')");
     if (formatParser.expected !== value) throw new Error(`expected: ${value}, got: ${formatParser.expected}`);
     return parseTypeMap[formatParser.type](readable).then((_value) => {
         if (_value !== formatParser.expected) {
@@ -38,7 +38,7 @@ function test_getStringFormatParser_valid() {
     const bytes = new Uint8Array([...byteValue, 0]);
     const readable = Readable.from([bytes], { objectMode: false });
     readable.pause();
-    const formatParser = getFormatParser("String");
+    const formatParser = getParseInfo("String");
     return parseTypeMap[formatParser.type](readable).then((_value) => {
         if (_value !== value) {
             throw new Error(`expected: ${value}, got: ${_value} | ${typeof value} - ${typeof _value}`);
