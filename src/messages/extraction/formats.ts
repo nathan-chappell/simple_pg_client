@@ -1,4 +1,15 @@
-export const formats = [
+export interface IProperty {
+    name: string
+    type: string
+    definition: string
+}
+
+export interface ITypeDef {
+    title: string
+    definition: IProperty[]
+}
+
+export const formats: ITypeDef[] = [
     {
         "title": "IBackendMessage (B)",
         "definition": [
@@ -1084,7 +1095,7 @@ export const formats = [
             },
             {
                 "name": "isBinary",
-                "type": "0 | 1",
+                "type": "Int16",
                 "definition": "The format code being used for the field. Currently will be zero (text) or one (binary). In a RowDescription returned from the statement variant of Describe, the format code is not yet known and will always be zero."
             }
         ]

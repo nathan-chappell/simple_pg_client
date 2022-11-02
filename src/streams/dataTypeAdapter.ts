@@ -12,6 +12,11 @@ export class DataTypeAdapter {
     this.byteYielder = yieldBytes(readable);
   }
 
+  async readInt8(): Promise<Byte> {
+    const bytes = await readNBytes(this.byteYielder, 1);
+    return bytes[0];
+  }
+
   async readInt16(): Promise<Byte> {
     const bytes = await readNBytes(this.byteYielder, 2);
     return (bytes[0] << 8) | bytes[1];

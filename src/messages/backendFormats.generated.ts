@@ -190,3 +190,5 @@ export interface IRowDescription extends IBackendMessage {
     length: Int32                      // Int32
     fields: IRowDescriptionField[]     // RowDescriptionField[Int16]
 }
+
+export const foo = {};

@@ -1,5 +1,5 @@
 import { writeFileSync } from "https://deno.land/std@0.161.0/node/fs.ts";
-import { formats } from './formats.js'
+import { formats, ITypeDef, IProperty } from './formats.ts'
 
 const backendFormats = formats.filter(f => f.title.match(/\(B\)/))
 
@@ -14,12 +14,11 @@ import {
     Byte4,
 } from './types.ts'`.trim();
 
-function getType(typeSpec) {
+export const getType = (typeSpec: string) {
     // literal / intensional types
     if (typeSpec.includes("|") || typeSpec.match(/^\d+$/))
         return typeSpec;
-    const { baseType, expected, arraySpec } = typeSpec.match(/^(?<baseType>\w+)(?<arraySpec>(\[\w+\])*)(\((?<expected>[^)]*)\))?/).groups
-    // console.log(baseType, expected, arraySpec)
+    const { baseType, expected, arraySpec } = typeSpec.match(/^(?<baseType>\w+)(?<arraySpec>(\[\w+\])*)(\((?<expected>[^)]*)\))?/)!.groups!;
     const _arraySpec = '[]'.repeat(arraySpec.split('[').length - 1)
     const _baseType = baseType === 'String' 
     ? 'string' 
@@ -29,7 +28,8 @@ function getType(typeSpec) {
     return expected || `${_baseType}${_arraySpec}`
 }
 
-function getProperty(defItem, i) {
+
+function getProperty(defItem: IProperty, i: number) {
     const name = defItem.name
     if (!name) {
         throw new Error(`name missing from definition[${i || 0}]: ${defItem.definition}`)
@@ -40,9 +40,9 @@ function getProperty(defItem, i) {
     return decl + ' '.repeat(commentIndent) + `// ${defItem.type}`
 }
 
-function genType(format) {
+function genType(format: ITypeDef) {
     try {
-        const typeName = format.title.match(/^\w+/)[0]
+        const typeName = format.title.match(/^\w+/)![0]
         const properties = format.definition.map(getProperty)
         const _typeName = typeName.startsWith('I') ? typeName : `I${typeName}`;
         const _extends = typeName === 'IBackendMessage' 
@@ -61,7 +61,7 @@ function genType(format) {
     }
 }
 
-function genTypes(name, formatList) {
+function genTypes(name: string, formatList: ITypeDef[]) {
     const types = formatList.map(genType);
     const fileData = `${warning}
 
