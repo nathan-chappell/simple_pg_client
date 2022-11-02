@@ -15,6 +15,14 @@ import { DataTypeAdapter } from "../streams/dataTypeAdapter.ts";`
 // Authentication messages are trickier and will be handled separately
 const backendFormats = formats.filter(f => f.title.match(/\(B\)/) && !f.title.match(/IBackendMessage|Authentication/))
 
+const getProp = (name: string, type: ITypeParserDef) => {
+    if (!type.arraySpec) {
+        return `    const ${name} = await builtin.${type.baseType}(adapter);`
+    } else {
+        // 
+    }
+}
+
 const fnTemplater = (messageType: string, props: string[][]) => `
 export const parse${messageType}: (adapter: DataTypeAdapter, baseProps: IBackendMessage) => Promise<${ensureInterface(messageType)}> = async (adapter, baseProps) => {
 ${props.map(([name, parser]) => `    const ${name} = await builtin.${parser}(adapter);`).join("\n")}
@@ -46,6 +54,7 @@ const getParser = (def: ITypeParserDef) => {
     if (!def.arraySpec) {
         return `parse${def.baseType}`;
     } else {
+
         return `parse_NOT_IMPLEMENTED`
     }
 }
