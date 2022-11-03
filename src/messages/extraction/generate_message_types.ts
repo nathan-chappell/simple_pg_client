@@ -40,26 +40,6 @@ function getProperty(defItem: IProperty, i: number) {
     return decl + ' '.repeat(commentIndent) + `// ${defItem.type}`
 }
 
-function genType(format: ITypeDef) {
-    try {
-        const typeName = format.title.match(/^\w+/)![0]
-        const properties = format.definition.map(getProperty)
-        const _typeName = typeName.startsWith('I') ? typeName : `I${typeName}`;
-        const _extends = typeName === 'IBackendMessage' 
-        ? ''
-        : typeName === 'IAuthenticationMessage'
-        ? " extends IBackendMessage"
-        : typeName.match(/Authentication/)
-        ? " extends IAuthenticationMessage"
-        : " extends IBackendMessage";
-
-        return `export interface ${_typeName}${_extends} {\n`
-            + properties.map(p => `    ${p}`).join("\n")
-            + `\n}`
-    } catch (e) {
-        throw new Error(`Error creating type ${format.title}: ${e}`);
-    }
-}
 
 function genTypes(name: string, formatList: ITypeDef[]) {
     const types = formatList.map(genType);

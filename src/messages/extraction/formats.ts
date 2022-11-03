@@ -4,18 +4,23 @@ export interface IProperty {
     definition: string
 }
 
-export interface ITypeDef {
+export interface IMessageDef {
+    internal?: boolean
+    backend?: boolean
+    frontend?: boolean
     title: string
     definition: IProperty[]
 }
 
-export const formats: ITypeDef[] = [
+export const formats: IMessageDef[] = [
     {
-        "title": "IBackendMessage (B)",
+        internal: true,
+        backend: true,
+        "title": "IBackendMessage",
         "definition": [
             {
                 "name": "messageType",
-                "type": "string",
+                "type": "String",
                 "definition": "Identifies the message as an authentication request.",
             },
             {
@@ -26,11 +31,13 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "IAuthenticationMessage (B)",
+        internal: true,
+        backend: true,
+        "title": "IAuthenticationMessage",
         "definition": [
             {
                 "name": "messageType",
-                "type": "string",
+                "type": "String",
                 "definition": "Identifies the message as an authentication request.",
             },
             {
@@ -46,7 +53,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "AuthenticationOk (B)",
+        backend: true,
+        "title": "AuthenticationOk",
         "definition": [
             {
                 "name": "messageType",
@@ -66,7 +74,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "AuthenticationKerberosV5 (B)",
+        backend: true,
+        "title": "AuthenticationKerberosV5",
         "definition": [
             {
                 "name": "messageType",
@@ -86,7 +95,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "AuthenticationCleartextPassword (B)",
+        backend: true,
+        "title": "AuthenticationCleartextPassword",
         "definition": [
             {
                 "name": "messageType",
@@ -106,7 +116,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "AuthenticationMD5Password (B)",
+        backend: true,
+        "title": "AuthenticationMD5Password",
         "definition": [
             {
                 "name": "messageType",
@@ -131,7 +142,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "AuthenticationSCMCredential (B)",
+        backend: true,
+        "title": "AuthenticationSCMCredential",
         "definition": [
             {
                 "name": "messageType",
@@ -151,7 +163,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "AuthenticationGSS (B)",
+        backend: true,
+        "title": "AuthenticationGSS",
         "definition": [
             {
                 "name": "messageType",
@@ -171,7 +184,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     // {
-    //     "title": "AuthenticationGSSContinue (B)",
+    //      backend: true,
+    //     "title": "AuthenticationGSSContinue",
     //     "definition": [
     //         {
     //             "name": "messageType",
@@ -196,7 +210,8 @@ export const formats: ITypeDef[] = [
     //     ],
     // },
     {
-        "title": "AuthenticationSSPI (B)",
+        backend: true,
+        "title": "AuthenticationSSPI",
         "definition": [
             {
                 "name": "messageType",
@@ -216,7 +231,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "AuthenticationSASL (B)",
+        backend: true,
+        "title": "AuthenticationSASL",
         "definition": [
             {
                 "name": "messageType",
@@ -236,7 +252,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     // {
-    //     "title": "AuthenticationSASLContinue (B)",
+    //      backend: true,
+    //     "title": "AuthenticationSASLContinue",
     //     "definition": [
     //         {
     //             "name": "messageType",
@@ -261,7 +278,8 @@ export const formats: ITypeDef[] = [
     //     ],
     // },
     // {
-    //     "title": "AuthenticationSASLFinal (B)",
+    //      backend: true,
+    //     "title": "AuthenticationSASLFinal",
     //     "definition": [
     //         {
     //             "name": "messageType",
@@ -286,7 +304,8 @@ export const formats: ITypeDef[] = [
     //     ],
     // },
     {
-        "title": "BackendKeyData (B)",
+        backend: true,
+        "title": "BackendKeyData",
         "definition": [
             {
                 "name": "messageType",
@@ -311,7 +330,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "Bind (F)",
+        frontend: true,
+        "title": "Bind",
         "definition": [
             {
                 "name": "messageType",
@@ -356,7 +376,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "BindComplete (B)",
+        backend: true,
+        "title": "BindComplete",
         "definition": [
             {
                 "name": "messageType",
@@ -371,7 +392,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "CancelRequest (F)",
+        frontend: true,
+        "title": "CancelRequest",
         "definition": [
             {
                 "name": "messageType",
@@ -396,7 +418,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "Close (F)",
+        frontend: true,
+        "title": "Close",
         "definition": [
             {
                 "name": "messageType",
@@ -421,7 +444,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "CloseComplete (B)",
+        backend: true,
+        "title": "CloseComplete",
         "definition": [
             {
                 "name": "messageType",
@@ -436,7 +460,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "CommandComplete (B)",
+        backend: true,
+        "title": "CommandComplete",
         "definition": [
             {
                 "name": "messageType",
@@ -491,7 +516,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "CopyFail (F)",
+        frontend: true,
+        "title": "CopyFail",
         "definition": [
             {
                 "name": "messageType",
@@ -511,7 +537,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "CopyInResponse (B)",
+        backend: true,
+        "title": "CopyInResponse",
         "definition": [
             {
                 "name": "messageType",
@@ -541,7 +568,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "CopyOutResponse (B)",
+        backend: true,
+        "title": "CopyOutResponse",
         "definition": [
             {
                 "name": "messageType",
@@ -571,7 +599,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "CopyBothResponse (B)",
+        backend: true,
+        "title": "CopyBothResponse",
         "definition": [
             {
                 "name": "messageType",
@@ -601,7 +630,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "DataRow (B)",
+        backend: true,
+        "title": "DataRow",
         "definition": [
             {
                 "name": "messageType",
@@ -621,7 +651,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "Describe (F)",
+        frontend: true,
+        "title": "Describe",
         "definition": [
             {
                 "name": "messageType",
@@ -646,7 +677,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "EmptyQueryResponse (B)",
+        backend: true,
+        "title": "EmptyQueryResponse",
         "definition": [
             {
                 "name": "messageType",
@@ -661,7 +693,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "ErrorResponse (B)",
+        backend: true,
+        "title": "ErrorResponse",
         "definition": [
             {
                 "name": "messageType",
@@ -676,7 +709,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "Execute (F)",
+        frontend: true,
+        "title": "Execute",
         "definition": [
             {
                 "name": "messageType",
@@ -701,7 +735,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "Flush (F)",
+        frontend: true,
+        "title": "Flush",
         "definition": [
             {
                 "name": "messageType",
@@ -716,7 +751,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     // {
-    //     "title": "FunctionCall (F)",
+    //      frontend: true,
+    //     "title": "FunctionCall",
     //     "definition": [
     //         {
     //             "name": "messageType",
@@ -751,7 +787,8 @@ export const formats: ITypeDef[] = [
     //     ],
     // },
     // {
-    //     "title": "FunctionCallResponse (B)",
+    //      backend: true,
+    //     "title": "FunctionCallResponse",
     //     "definition": [
     //         {
     //             "name": "messageType",
@@ -776,7 +813,8 @@ export const formats: ITypeDef[] = [
     //     ],
     // },
     // {
-    //     "title": "GSSENCRequest (F)",
+    //      frontend: true,
+    //     "title": "GSSENCRequest",
     //     "definition": [
     //         {
     //             "name": "messageType",
@@ -791,7 +829,8 @@ export const formats: ITypeDef[] = [
     //     ],
     // },
     // {
-    //     "title": "GSSResponse (F)",
+    //      frontend: true,
+    //     "title": "GSSResponse",
     //     "definition": [
     //         {
     //             "name": "messageType",
@@ -811,7 +850,8 @@ export const formats: ITypeDef[] = [
     //     ],
     // },
     // {
-    //     "title": "NegotiateProtocolVersion (B)",
+    //      backend: true,
+    //     "title": "NegotiateProtocolVersion",
     //     "definition": [
     //         {
     //             "name": "messageType",
@@ -836,7 +876,8 @@ export const formats: ITypeDef[] = [
     //     ],
     // },
     {
-        "title": "NoData (B)",
+        backend: true,
+        "title": "NoData",
         "definition": [
             {
                 "name": "messageType",
@@ -851,7 +892,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "NoticeResponse (B)",
+        backend: true,
+        "title": "NoticeResponse",
         "definition": [
             {
                 "name": "messageType",
@@ -866,7 +908,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "NotificationResponse (B)",
+        backend: true,
+        "title": "NotificationResponse",
         "definition": [
             {
                 "name": "messageType",
@@ -896,7 +939,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "ParameterDescription (B)",
+        backend: true,
+        "title": "ParameterDescription",
         "definition": [
             {
                 "name": "messageType",
@@ -916,7 +960,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "ParameterStatus (B)",
+        backend: true,
+        "title": "ParameterStatus",
         "definition": [
             {
                 "name": "messageType",
@@ -941,7 +986,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "Parse (F)",
+        frontend: true,
+        "title": "Parse",
         "definition": [
             {
                 "name": "messageType",
@@ -971,7 +1017,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "ParseComplete (B)",
+        backend: true,
+        "title": "ParseComplete",
         "definition": [
             {
                 "name": "messageType",
@@ -986,7 +1033,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "PasswordMessage (F)",
+        frontend: true,
+        "title": "PasswordMessage",
         "definition": [
             {
                 "name": "messageType",
@@ -1006,7 +1054,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "PortalSuspended (B)",
+        backend: true,
+        "title": "PortalSuspended",
         "definition": [
             {
                 "name": "messageType",
@@ -1021,7 +1070,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "Query (F)",
+        frontend: true,
+        "title": "Query",
         "definition": [
             {
                 "name": "messageType",
@@ -1041,7 +1091,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "ReadyForQuery (B)",
+        backend: true,
+        "title": "ReadyForQuery",
         "definition": [
             {
                 "name": "messageType",
@@ -1061,7 +1112,9 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "IRowDescriptionField (B)",
+        internal: true,
+        backend: true,
+        "title": "IRowDescriptionField",
         "definition": [
             {
                 "name": "name",
@@ -1101,7 +1154,8 @@ export const formats: ITypeDef[] = [
         ]
     },
     {
-        "title": "RowDescription (B)",
+        backend: true,
+        "title": "RowDescription",
         "definition": [
             {
                 "name": "messageType",
@@ -1115,13 +1169,14 @@ export const formats: ITypeDef[] = [
             },
             {
                 "name": "fields",
-                "type": "RowDescriptionField[Int16]",
+                "type": "IRowDescriptionField[Int16]",
                 "definition": "Specifies the number of fields in a row (can be zero).",
             },
         ],
     },
     // {
-    //     "title": "SASLInitialResponse (F)",
+    //      frontend: true,
+    //     "title": "SASLInitialResponse",
     //     "definition": [
     //         {
     //             "name": "messageType",
@@ -1151,7 +1206,8 @@ export const formats: ITypeDef[] = [
     //     ],
     // },
     // {
-    //     "title": "SASLResponse (F)",
+    //      frontend: true,
+    //     "title": "SASLResponse",
     //     "definition": [
     //         {
     //             "name": "messageType",
@@ -1171,7 +1227,8 @@ export const formats: ITypeDef[] = [
     //     ],
     // },
     {
-        "title": "SSLRequest (F)",
+        frontend: true,
+        "title": "SSLRequest",
         "definition": [
             {
                 "name": "messageType",
@@ -1186,7 +1243,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "StartupMessage (F)",
+        frontend: true,
+        "title": "StartupMessage",
         "definition": [
             {
                 "name": "messageType",
@@ -1201,7 +1259,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "Sync (F)",
+        frontend: true,
+        "title": "Sync",
         "definition": [
             {
                 "name": "messageType",
@@ -1216,7 +1275,8 @@ export const formats: ITypeDef[] = [
         ],
     },
     {
-        "title": "Terminate (F)",
+        frontend: true,
+        "title": "Terminate",
         "definition": [
             {
                 "name": "messageType",
