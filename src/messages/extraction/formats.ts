@@ -30,28 +30,28 @@ export const formats: IMessageDef[] = [
             },
         ],
     },
-    {
-        internal: true,
-        backend: true,
-        "title": "IAuthenticationMessage",
-        "definition": [
-            {
-                "name": "messageType",
-                "type": "String",
-                "definition": "Identifies the message as an authentication request.",
-            },
-            {
-                "name": "length",
-                "type": "Int32",
-                "definition": "Length of message contents in bytes, including self.",
-            },
-            {
-                "name": "code",
-                "type": "Int32",
-                "definition": "Specifies that the authentication was successful.",
-            },
-        ],
-    },
+        // {
+        //     internal: true,
+        //     backend: true,
+        //     "title": "IAuthenticationMessage",
+        //     "definition": [
+        //         {
+        //             "name": "messageType",
+        //             "type": "String",
+        //             "definition": "Identifies the message as an authentication request.",
+        //         },
+        //         {
+        //             "name": "length",
+        //             "type": "Int32",
+        //             "definition": "Length of message contents in bytes, including self.",
+        //         },
+        //         {
+        //             "name": "code",
+        //             "type": "Int32",
+        //             "definition": "Specifies that the authentication was successful.",
+        //         },
+        //     ],
+        // },
     {
         backend: true,
         "title": "AuthenticationOk",
@@ -359,7 +359,7 @@ export const formats: IMessageDef[] = [
             //     "definition": "The number of parameter format codes that follow (denoted C below). This can be zero to indicate that there are no parameters or that the parameters all use the default format (text); or one, in which case the specified format code is applied to all parameters; or it can equal the actual number of parameters.",
             // },
             {
-                "name": "parameterFormatCodes",
+                "name": "pFormats",
                 "type": "Int16[Int16]",
                 "definition": "The parameter format codes. Each must presently be zero (text) or one (binary).",
             },
@@ -369,7 +369,7 @@ export const formats: IMessageDef[] = [
                 "definition": "The parameters. [The number of parameter values that follow (possibly zero). This must match the number of parameters needed by the query.]",
             },
             {
-                "name": "resultFormatCodes",
+                "name": "rFormats",
                 "type": "Int16[Int16]",
                 "definition": "The result-column format codes. Each must presently be zero (text) or one (binary).",
             },
@@ -432,7 +432,7 @@ export const formats: IMessageDef[] = [
                 "definition": "Length of message contents in bytes, including self.",
             },
             {
-                "name": "statementOrPortal",
+                "name": "qType",
                 "type": "'S' | 'P'",
                 "definition": "'S' to close a prepared statement; or 'P' to close a portal.",
             },
@@ -665,7 +665,7 @@ export const formats: IMessageDef[] = [
                 "definition": "Length of message contents in bytes, including self.",
             },
             {
-                "name": "statementOrPortal",
+                "name": "qType",
                 "type": "Byte1",
                 "definition": "'S' to describe a prepared statement; or 'P' to describe a portal.",
             },
@@ -953,7 +953,7 @@ export const formats: IMessageDef[] = [
                 "definition": "Length of message contents in bytes, including self.",
             },
             {
-                "name": "parameterTypes",
+                "name": "pTypes",
                 "type": "Int32[Int16]",
                 "definition": "OID of parameter data types. [The number of parameters used by the statement (can be zero).]",
             },
@@ -1010,7 +1010,7 @@ export const formats: IMessageDef[] = [
                 "definition": "The query string to be parsed.",
             },
             {
-                "name": "parameterTypes",
+                "name": "pTypes",
                 "type": "Int32[Int16]",
                 "definition": "OID of parameter data types. [The number of parameter data types specified (can be zero). Note that this is not an indication of the number of parameters that might appear in the query string, only the number that the frontend wants to prespecify types for.]",
             },
@@ -1247,12 +1247,12 @@ export const formats: IMessageDef[] = [
         "title": "StartupMessage",
         "definition": [
             {
-                "name": "messageType",
+                "name": "length",
                 "type": "Int32",
                 "definition": "Length of message contents in bytes, including self.",
             },
             {
-                "name": "length",
+                "name": "protocol",
                 "type": "Int32(196608)",
                 "definition": "The protocol version number. The most significant 16 bits are the major version number (3 for the protocol described here)." + " The least significant 16 bits are the minor version number (0 for the protocol described here).",
             },
