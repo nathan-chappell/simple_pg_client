@@ -10,6 +10,8 @@ const validateStartup = () => {
     }
 }
 
+validateStartup()
+
 //#region globals
 const builtinsFileName = 'builtinTypes'
 const messageDefsFileName = 'messageDefinitions'
@@ -34,6 +36,7 @@ const builtinTypes: { [type: string]: { jsType: string; adapterType: string } } 
     Int8: { jsType: 'number', adapterType: 'Int8' },
     Byte: { jsType: 'number', adapterType: 'Int8' },
     Byte1: { jsType: 'string', adapterType: 'Char' },
+    Char: { jsType: 'string', adapterType: 'Char' },
     String: { jsType: 'string', adapterType: 'String' },
 }
 
@@ -83,15 +86,15 @@ type TArraySizeInfo = ('Int16' | 'Int32')[]
 
 interface ITypeInfo {
     arraySizeInfo: TArraySizeInfo
-    baseType: string
     expected: string | null
     rawName: string
     typeNoArray: string
+    typeNoExpected: string
     typeScriptName: string
 }
 
 const getArraySizeInfo: (rawName: string) => TArraySizeInfo = (rawName: string) =>
-    [...rawName.matchAll(/\[Int16|Int32\]/g)].map(m => m[1]).reverse() as TArraySizeInfo
+    [...rawName.matchAll(/\[(Int16|Int32)\]/g)].map(m => m[1]).reverse() as TArraySizeInfo
 
 const substrTo = (s: string, c: string) => (s.includes(c) ? s.substring(0, s.indexOf(c)) : s)
 const getTypeNoArray = (rawName: string) => substrTo(rawName, '[')
@@ -104,7 +107,7 @@ const getTypeScriptName = (rawName: string) => {
     if (typeNoExpected in builtinTypes) {
         return typeNoExpected
     } else if (typeNoExpected.includes('|')) {
-        return typeNoExpected
+        return 'Char'
     } else if (nonInternalMessageDefs.has(typeNoExpected)) {
         return `I${typeNoExpected}`
     } else if (internalMessageDefs.has(typeNoExpected)) {
@@ -122,16 +125,16 @@ const getTypeScriptName = (rawName: string) => {
 const getTypeInfo: (rawName: string) => ITypeInfo = rawName => {
     const typeScriptName = getTypeScriptName(rawName)
     const typeNoArray = getTypeNoArray(rawName)
-    const baseType = getTypeNoExpected(getTypeNoArray(rawName))
+    const typeNoExpected = getTypeNoExpected(getTypeNoArray(rawName))
     const arraySizeInfo = getArraySizeInfo(rawName)
     const expected = getExpected(rawName)
 
     return {
         arraySizeInfo,
-        baseType,
         expected,
         rawName,
         typeNoArray,
+        typeNoExpected,
         typeScriptName,
     }
 }
@@ -144,23 +147,24 @@ const getBaseInterface = (name: string) => {
     if (name.match(/Authentication/)) return 'IAuthenticationMessage'
     switch (name) {
         case 'IBackendMessage':
+        case 'IField':
             return ''
         default:
             return 'IBackendMessage'
     }
 }
 
-const getInterfaceProperty = (defItem: IProperty, i: number) => {
-    if (!defItem.name) throw new Error(`name missing from definition[${i || 0}]: ${defItem.definition}`)
-    const typeInfo = getTypeInfo(defItem.type)
-    const decl = `${defItem.name}: ${typeInfo.typeScriptName}`
-    return alignOnColumn(decl, 35, `// ${defItem.type}`)
+const getInterfaceProperty = (property: IProperty, i: number) => {
+    if (!property.name) throw new Error(`name missing from definition[${i || 0}]: ${property.definition}`)
+    const typeInfo = getTypeInfo(property.type)
+    const decl = alignOnColumn(`${property.name}:`, 15, `${typeInfo.typeScriptName}`)
+    return alignOnColumn(decl, 30, `// ${property.type}`)
 }
 
-const genInterface = (format: IMessageDef) => {
-    const interfaceName = getTypeScriptName(format.title)
+const genInterface = (messageDef: IMessageDef) => {
+    const interfaceName = getTypeScriptName(messageDef.title)
     try {
-        const properties = format.definition.map(getInterfaceProperty)
+        const properties = messageDef.definition.map(getInterfaceProperty)
         const baseInterface = getBaseInterface(interfaceName)
         const extendsClause = baseInterface === '' ? '' : `extends ${baseInterface} `
 
@@ -170,7 +174,7 @@ const genInterface = (format: IMessageDef) => {
             `}`,
         ].join('\n')
     } catch (e) {
-        throw new Error(`Error creating type ${format.title}: ${e}`)
+        throw new Error(`Error creating type ${messageDef.title}: ${e}`)
     }
 }
 
@@ -179,54 +183,104 @@ const genInterface = (format: IMessageDef) => {
 //#region parsers
 
 const getPropertyParser = (property: IProperty) => {
-    if (property.type in builtinTypes) {
-        const adapterType = getBuiltinTypeAttr(property.type, 'adapterType')
-        return `export const ${property.name} = await parse${typeInfo.baseType}(adapter)`
-    }
     const typeInfo = getTypeInfo(property.type)
+    // prettier-ignore
+    if (typeInfo.typeScriptName in builtinTypes) {
+        const adapterType = getBuiltinTypeAttr(typeInfo.typeScriptName, 'adapterType')
+
+        return indent(4)(alignOnColumn(`const ${property.name}`, 20, `= await parse${adapterType}(adapter)`))
+    } else if (typeInfo.arraySizeInfo.length > 0) {
+        const lines = []
+        const sizeInfo = [...typeInfo.arraySizeInfo].reverse()
+        for (let loopDepth = 0; loopDepth < sizeInfo.length; ++loopDepth) {
+            const i_                = `i_${loopDepth}`
+            const count_            = `count_${loopDepth}`
+            const result_           = `result_${loopDepth}`
+            
+            const declareResult     = `const ${result_} = []`
+            const parseCount        = `const ${count_} = await parse${sizeInfo[loopDepth]}(adapter)`;
+            if (!sizeInfo[loopDepth]) {
+                throw new Error(`sizeInfo error: ${JSON.stringify(typeInfo)}`)
+            }
+            const parseInLoop       = `for (let ${i_} = 0; ${i_} < ${count_}; ++${i_}) {`
+
+            lines.push(...[declareResult, parseCount, parseInLoop].map(indent(4*loopDepth)))
+        }
+        {
+            const result_           = `result_${sizeInfo.length - 1}`
+            const parseItem         = `${result_}.push(await parse${typeInfo.typeNoArray}(adapter))`
+
+            lines.push(...[parseItem].map(indent(4 * sizeInfo.length)))
+        }
+        for (let loopDepth = sizeInfo.length - 2; loopDepth >= 0; --loopDepth) {
+            const result_           = `result_${loopDepth}`
+            const innerResult_      = `result_${loopDepth + 1}`
+            const pushInnerResult   = `${result_}.push(${innerResult_})`
+
+            lines.push(...['}', pushInnerResult].map(indent(4 * (loopDepth + 1))))
+        }
+        {
+            const result_           = `result_0`
+            const assignToProp      = `const ${property.name} = ${result_}`
+
+            lines.push('}', assignToProp)
+        }
+        return lines.map(indent(4)).join('\n')
+    } else {
+        throw new Error(
+            `[getPropertyParser] failed with property:\n${JSON.stringify(typeInfo)}\n ${JSON.stringify(
+                property
+            )}`
+        )
+    }
 }
 
 const genParser = (messageDef: IMessageDef) => {
+    const hasBaseMessage = !messageDef.internal
+    const nonBaseProperties = hasBaseMessage ? messageDef.definition.slice(2) : messageDef.definition.slice()
+    const adapter_ = nonBaseProperties.length == 0 ? '_adapter' : 'adapter'
     const messageTypeInfo = getTypeInfo(messageDef.title)
-    const parserType = `(adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<${messageTypeInfo.typeScriptName}>`
-    const propertyParsers = messageDef.definition.map(getPropertyParser)
-    const resultBody = messageDef.definition.map(p => `${p.name},`)
-    return [
-        `const parse${messageDef.title}: ${parserType}`,
-        indent(2)(`= async (adapter, baseMessage) => {`),
-        ...propertyParsers.map(indent(4)),
-        indent(4)('return {'),
-        indent(8)('...baseMessage,'),
-        ...resultBody.map(indent(8)),
-        indent(4)('}'),
-        `}`,
-    ].join('\n')
+    const parameterList = hasBaseMessage
+        ? `${adapter_}: DataTypeAdapter, baseMessage: IBackendMessage`
+        : `${adapter_}: DataTypeAdapter`
+
+    const parserType = `(${parameterList}) => Promise<${messageTypeInfo.typeScriptName}>`
+    if (nonBaseProperties.length === 0) {
+        // prettier-ignore
+        return [
+            `export const parse${messageDef.title}: ${parserType}`,
+            indent(2)( `= (${parameterList}) => Promise.resolve(baseMessage as ${messageTypeInfo.typeScriptName})`),
+        ].join('\n')
+    } else {
+        const propertyParsers = nonBaseProperties.map(getPropertyParser)
+        const resultBody = ['...baseMessage', ...nonBaseProperties.map(p => `${p.name}`)].map(s => `${s},`)
+        if (!hasBaseMessage) resultBody.shift()
+
+        return [
+            `export const parse${messageDef.title}: ${parserType}`,
+            indent(2)(`= async (${parameterList}) => {`),
+            ...propertyParsers,
+            indent(4)('return {'),
+            ...resultBody.map(indent(8)),
+            indent(4)('}'),
+            `}`,
+        ].join('\n')
+    }
 }
 
 //#endregion
 
-//#region main generators
+//#region main type-guards
 
-// function genParser(format: IMessageDef) {
-//     const typeName = format.title.match(/^\w+/)![0]
-//     const _typeName = typeName.startsWith('I') ? typeName : `I${typeName}`
-//     needTypes.add(_typeName)
-//     const props = format.definition.slice(2).map(prop => [prop.name, getParser(getTypeInfo(prop.type))])
-//     return genMessageParsingFunction(typeName, props)
-// }
-
-// function genBackendParsers(name: string, formatList: IMessageDef[]) {
-//     const parserDefs = formatList.map(genParser)
-//     const typeImports = `import {
-// ${[...needTypes].map(t => `    ${t},`).join('\n')}
-// } from './backendFormats.generated.ts'`
-
-//     const fileData = `
-// ${imports}
-// ${typeImports}
-// ${parserDefs.join('\n\n')}`
-//     writeFileSync(`./src/messages/${name}.generated.ts`, fileData)
-// }
+const genTypeGuard = (messageDef: IMessageDef) => {
+    const messageTypeInfo = getTypeInfo(messageDef.title)
+    const parameterTypeInfo = getTypeInfo(messageDef.definition[0].type)
+    if (!parameterTypeInfo.expected) throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
+    const open = `export function is${messageTypeInfo.typeScriptName}(message: IBackendMessage): message is ${messageTypeInfo.typeScriptName} {`
+    const body = `return message.messageType === ${parameterTypeInfo.expected}`
+    const close = '}'
+    return [open, indent(4)(body), close].join('\n')
+}
 
 //#endregion
 
@@ -243,11 +297,17 @@ const genFile = (fileName: string, genFile: () => string) => {
 
 // genBackendParsers('backendMessageParsers', backendNonAuthenticationFormats)
 
+const getFormatInfo = (messageDef: IMessageDef) => {
+    const header = `/// ${messageDef.title}`
+    const interface_ = genInterface(messageDef)
+    const parser = genParser(messageDef)
+    const typeGuard = messageDef.internal ? '// No type guard' : genTypeGuard(messageDef)
+    return [header, interface_, parser, typeGuard].join('\n\n')
+}
+
 const genMessageDefs = () => `${imports}
 
-${backendNonAuthenticationFormats.map(genInterface).join('\n\n')}
-
-${backendNonAuthenticationFormats.map(genParser).join('\n\n')}
+${backendNonAuthenticationFormats.map(getFormatInfo).join('\n\n')}
 `
 
 genFile(builtinsFileName, genBuiltins)

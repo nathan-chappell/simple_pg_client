@@ -1114,7 +1114,7 @@ export const formats: IMessageDef[] = [
     {
         internal: true,
         backend: true,
-        "title": "IRowDescriptionField",
+        "title": "IField",
         "definition": [
             {
                 "name": "name",
@@ -1127,7 +1127,7 @@ export const formats: IMessageDef[] = [
                 "definition": "If the field can be identified as a column of a specific table, the object ID of the table; otherwise zero."
             },
             {
-                "name": "columnAttributeNumber",
+                "name": "attrNo",
                 "type": "Int16",
                 "definition": "If the field can be identified as a column of a specific table, the attribute number of the column; otherwise zero."
             },
@@ -1169,7 +1169,7 @@ export const formats: IMessageDef[] = [
             },
             {
                 "name": "fields",
-                "type": "IRowDescriptionField[Int16]",
+                "type": "IField[Int16]",
                 "definition": "Specifies the number of fields in a row (can be zero).",
             },
         ],

@@ -7,401 +7,435 @@ import {
     Int8,
     Byte,
     Byte1,
+    Char,
     String,
     parseInt32,
     parseInt16,
     parseInt8,
     parseByte,
     parseByte1,
+    parseChar,
     parseString,
 } from './builtinTypes.generated.ts'
 
 
+/// IBackendMessage
+
 export interface IBackendMessage {
-    messageType: String                // String
-    length: Int32                      // Int32
+    messageType:   String         // String
+    length:        Int32          // Int32
 }
 
-export interface IBackendKeyData extends IBackendMessage {
-    messageType: Byte1                 // Byte1('K')
-    length: Int32                      // Int32(12)
-    pid: Int32                         // Int32
-    key: Int32                         // Int32
-}
-
-export interface IBindComplete extends IBackendMessage {
-    messageType: Byte1                 // Byte1('2')
-    length: Int32                      // Int32(4)
-}
-
-export interface ICloseComplete extends IBackendMessage {
-    messageType: Byte1                 // Byte1('3')
-    length: Int32                      // Int32(4)
-}
-
-export interface ICommandComplete extends IBackendMessage {
-    messageType: Byte1                 // Byte1('C')
-    length: Int32                      // Int32
-    message: String                    // String
-}
-
-export interface ICopyInResponse extends IBackendMessage {
-    messageType: Byte1                 // Byte1('G')
-    length: Int32                      // Int32
-    isBinary: Int8                     // Int8
-    formatCodes: Int16[]               // Int16[Int16]
-}
-
-export interface ICopyOutResponse extends IBackendMessage {
-    messageType: Byte1                 // Byte1('H')
-    length: Int32                      // Int32
-    isBinary: Int8                     // Int8
-    formatCodes: Int16[]               // Int16[Int16]
-}
-
-export interface ICopyBothResponse extends IBackendMessage {
-    messageType: Byte1                 // Byte1('W')
-    length: Int32                      // Int32
-    isBinary: Int8                     // Int8
-    formatCodes: Int16[]               // Int16[Int16]
-}
-
-export interface IDataRow extends IBackendMessage {
-    messageType: Byte1                 // Byte1('D')
-    length: Int32                      // Int32
-    columns: Byte[][]                  // Byte[Int32][Int16]
-}
-
-export interface IEmptyQueryResponse extends IBackendMessage {
-    messageType: Byte1                 // Byte1('I')
-    length: Int32                      // Int32(4)
-}
-
-export interface IErrorResponse extends IBackendMessage {
-    messageType: Byte1                 // Byte1('E')
-    length: Int32                      // Int32
-}
-
-export interface INoData extends IBackendMessage {
-    messageType: Byte1                 // Byte1('n')
-    length: Int32                      // Int32(4)
-}
-
-export interface INoticeResponse extends IBackendMessage {
-    messageType: Byte1                 // Byte1('N')
-    length: Int32                      // Int32
-}
-
-export interface INotificationResponse extends IBackendMessage {
-    messageType: Byte1                 // Byte1('A')
-    length: Int32                      // Int32
-    pid: Int32                         // Int32
-    channelName: String                // String
-    message: String                    // String
-}
-
-export interface IParameterDescription extends IBackendMessage {
-    messageType: Byte1                 // Byte1('t')
-    length: Int32                      // Int32
-    parameterTypes: Int32[]            // Int32[Int16]
-}
-
-export interface IParameterStatus extends IBackendMessage {
-    messageType: Byte1                 // Byte1('S')
-    length: Int32                      // Int32
-    name: String                       // String
-    value: String                      // String
-}
-
-export interface IParseComplete extends IBackendMessage {
-    messageType: Byte1                 // Byte1('1')
-    length: Int32                      // Int32(4)
-}
-
-export interface IPortalSuspended extends IBackendMessage {
-    messageType: Byte1                 // Byte1('s')
-    length: Int32                      // Int32(4)
-}
-
-export interface IReadyForQuery extends IBackendMessage {
-    messageType: Byte1                 // Byte1('Z')
-    length: Int32                      // Int32(5)
-    status: 'I' | 'T' | 'E'            // 'I' | 'T' | 'E'
-}
-
-export interface IRowDescriptionField extends IBackendMessage {
-    name: String                       // String
-    tableOid: Int32                    // Int32
-    columnAttributeNumber: Int16       // Int16
-    typeOid: Int32                     // Int32
-    typeSize: Int16                    // Int16
-    typeModifier: Int32                // Int32
-    isBinary: Int16                    // Int16
-}
-
-export interface IRowDescription extends IBackendMessage {
-    messageType: Byte1                 // Byte1('T')
-    length: Int32                      // Int32
-    fields: IRowDescriptionField[]     // IRowDescriptionField[Int16]
-}
-
-const parseIBackendMessage: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IBackendMessage>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseString(adapter)
-    export const length = await parseInt32(adapter)
+export const parseIBackendMessage: (adapter: DataTypeAdapter) => Promise<IBackendMessage>
+  = async (adapter: DataTypeAdapter) => {
+    const messageType   = await parseString(adapter)
+    const length        = await parseInt32(adapter)
     return {
-        ...baseMessage,
         messageType,
         length,
     }
 }
 
-const parseBackendKeyData: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IBackendKeyData>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const pid = await parseInt32(adapter)
-    export const key = await parseInt32(adapter)
+// No type guard
+
+/// BackendKeyData
+
+export interface IBackendKeyData extends IBackendMessage {
+    messageType:   Byte1          // Byte1('K')
+    length:        Int32          // Int32(12)
+    pid:           Int32          // Int32
+    key:           Int32          // Int32
+}
+
+export const parseBackendKeyData: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IBackendKeyData>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const pid           = await parseInt32(adapter)
+    const key           = await parseInt32(adapter)
     return {
         ...baseMessage,
-        messageType,
-        length,
         pid,
         key,
     }
 }
 
-const parseBindComplete: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IBindComplete>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        messageType,
-        length,
-    }
+export function isIBackendKeyData(message: IBackendMessage): message is IBackendKeyData {
+    return message.messageType === 'K'
 }
 
-const parseCloseComplete: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ICloseComplete>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        messageType,
-        length,
-    }
+/// BindComplete
+
+export interface IBindComplete extends IBackendMessage {
+    messageType:   Byte1          // Byte1('2')
+    length:        Int32          // Int32(4)
 }
 
-const parseCommandComplete: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ICommandComplete>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const message = await parseString(adapter)
+export const parseBindComplete: (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IBindComplete>
+  = (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise.resolve(baseMessage as IBindComplete)
+
+export function isIBindComplete(message: IBackendMessage): message is IBindComplete {
+    return message.messageType === '2'
+}
+
+/// CloseComplete
+
+export interface ICloseComplete extends IBackendMessage {
+    messageType:   Byte1          // Byte1('3')
+    length:        Int32          // Int32(4)
+}
+
+export const parseCloseComplete: (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ICloseComplete>
+  = (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise.resolve(baseMessage as ICloseComplete)
+
+export function isICloseComplete(message: IBackendMessage): message is ICloseComplete {
+    return message.messageType === '3'
+}
+
+/// CommandComplete
+
+export interface ICommandComplete extends IBackendMessage {
+    messageType:   Byte1          // Byte1('C')
+    length:        Int32          // Int32
+    message:       String         // String
+}
+
+export const parseCommandComplete: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ICommandComplete>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const message       = await parseString(adapter)
     return {
         ...baseMessage,
-        messageType,
-        length,
         message,
     }
 }
 
-const parseCopyInResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ICopyInResponse>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const isBinary = await parseInt8(adapter)
-    export const formatCodes = await parseInt16(adapter)
+export function isICommandComplete(message: IBackendMessage): message is ICommandComplete {
+    return message.messageType === 'C'
+}
+
+/// CopyInResponse
+
+export interface ICopyInResponse extends IBackendMessage {
+    messageType:   Byte1          // Byte1('G')
+    length:        Int32          // Int32
+    isBinary:      Int8           // Int8
+    formatCodes:   Int16[]        // Int16[Int16]
+}
+
+export const parseCopyInResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ICopyInResponse>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const isBinary      = await parseInt8(adapter)
+    const result_0 = []
+    const count_0 = await parseInt16(adapter)
+    for (let i_0 = 0; i_0 < count_0; ++i_0) {
+        result_0.push(await parseInt16(adapter))
+    }
+    const formatCodes = result_0
     return {
         ...baseMessage,
-        messageType,
-        length,
         isBinary,
         formatCodes,
     }
 }
 
-const parseCopyOutResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ICopyOutResponse>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const isBinary = await parseInt8(adapter)
-    export const formatCodes = await parseInt16(adapter)
+export function isICopyInResponse(message: IBackendMessage): message is ICopyInResponse {
+    return message.messageType === 'G'
+}
+
+/// CopyOutResponse
+
+export interface ICopyOutResponse extends IBackendMessage {
+    messageType:   Byte1          // Byte1('H')
+    length:        Int32          // Int32
+    isBinary:      Int8           // Int8
+    formatCodes:   Int16[]        // Int16[Int16]
+}
+
+export const parseCopyOutResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ICopyOutResponse>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const isBinary      = await parseInt8(adapter)
+    const result_0 = []
+    const count_0 = await parseInt16(adapter)
+    for (let i_0 = 0; i_0 < count_0; ++i_0) {
+        result_0.push(await parseInt16(adapter))
+    }
+    const formatCodes = result_0
     return {
         ...baseMessage,
-        messageType,
-        length,
         isBinary,
         formatCodes,
     }
 }
 
-const parseCopyBothResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ICopyBothResponse>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const isBinary = await parseInt8(adapter)
-    export const formatCodes = await parseInt16(adapter)
+export function isICopyOutResponse(message: IBackendMessage): message is ICopyOutResponse {
+    return message.messageType === 'H'
+}
+
+/// CopyBothResponse
+
+export interface ICopyBothResponse extends IBackendMessage {
+    messageType:   Byte1          // Byte1('W')
+    length:        Int32          // Int32
+    isBinary:      Int8           // Int8
+    formatCodes:   Int16[]        // Int16[Int16]
+}
+
+export const parseCopyBothResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ICopyBothResponse>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const isBinary      = await parseInt8(adapter)
+    const result_0 = []
+    const count_0 = await parseInt16(adapter)
+    for (let i_0 = 0; i_0 < count_0; ++i_0) {
+        result_0.push(await parseInt16(adapter))
+    }
+    const formatCodes = result_0
     return {
         ...baseMessage,
-        messageType,
-        length,
         isBinary,
         formatCodes,
     }
 }
 
-const parseDataRow: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IDataRow>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const columns = await parseByte(adapter)
+export function isICopyBothResponse(message: IBackendMessage): message is ICopyBothResponse {
+    return message.messageType === 'W'
+}
+
+/// DataRow
+
+export interface IDataRow extends IBackendMessage {
+    messageType:   Byte1          // Byte1('D')
+    length:        Int32          // Int32
+    columns:       Byte[][]       // Byte[Int32][Int16]
+}
+
+export const parseDataRow: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IDataRow>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const result_0 = []
+    const count_0 = await parseInt32(adapter)
+    for (let i_0 = 0; i_0 < count_0; ++i_0) {
+        const result_1 = []
+        const count_1 = await parseInt16(adapter)
+        for (let i_1 = 0; i_1 < count_1; ++i_1) {
+            result_1.push(await parseByte(adapter))
+        }
+        result_0.push(result_1)
+    }
+    const columns = result_0
     return {
         ...baseMessage,
-        messageType,
-        length,
         columns,
     }
 }
 
-const parseEmptyQueryResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IEmptyQueryResponse>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        messageType,
-        length,
-    }
+export function isIDataRow(message: IBackendMessage): message is IDataRow {
+    return message.messageType === 'D'
 }
 
-const parseErrorResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IErrorResponse>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        messageType,
-        length,
-    }
+/// EmptyQueryResponse
+
+export interface IEmptyQueryResponse extends IBackendMessage {
+    messageType:   Byte1          // Byte1('I')
+    length:        Int32          // Int32(4)
 }
 
-const parseNoData: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<INoData>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        messageType,
-        length,
-    }
+export const parseEmptyQueryResponse: (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IEmptyQueryResponse>
+  = (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise.resolve(baseMessage as IEmptyQueryResponse)
+
+export function isIEmptyQueryResponse(message: IBackendMessage): message is IEmptyQueryResponse {
+    return message.messageType === 'I'
 }
 
-const parseNoticeResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<INoticeResponse>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        messageType,
-        length,
-    }
+/// ErrorResponse
+
+export interface IErrorResponse extends IBackendMessage {
+    messageType:   Byte1          // Byte1('E')
+    length:        Int32          // Int32
 }
 
-const parseNotificationResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<INotificationResponse>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const pid = await parseInt32(adapter)
-    export const channelName = await parseString(adapter)
-    export const message = await parseString(adapter)
+export const parseErrorResponse: (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IErrorResponse>
+  = (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise.resolve(baseMessage as IErrorResponse)
+
+export function isIErrorResponse(message: IBackendMessage): message is IErrorResponse {
+    return message.messageType === 'E'
+}
+
+/// NoData
+
+export interface INoData extends IBackendMessage {
+    messageType:   Byte1          // Byte1('n')
+    length:        Int32          // Int32(4)
+}
+
+export const parseNoData: (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<INoData>
+  = (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise.resolve(baseMessage as INoData)
+
+export function isINoData(message: IBackendMessage): message is INoData {
+    return message.messageType === 'n'
+}
+
+/// NoticeResponse
+
+export interface INoticeResponse extends IBackendMessage {
+    messageType:   Byte1          // Byte1('N')
+    length:        Int32          // Int32
+}
+
+export const parseNoticeResponse: (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<INoticeResponse>
+  = (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise.resolve(baseMessage as INoticeResponse)
+
+export function isINoticeResponse(message: IBackendMessage): message is INoticeResponse {
+    return message.messageType === 'N'
+}
+
+/// NotificationResponse
+
+export interface INotificationResponse extends IBackendMessage {
+    messageType:   Byte1          // Byte1('A')
+    length:        Int32          // Int32
+    pid:           Int32          // Int32
+    channelName:   String         // String
+    message:       String         // String
+}
+
+export const parseNotificationResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<INotificationResponse>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const pid           = await parseInt32(adapter)
+    const channelName   = await parseString(adapter)
+    const message       = await parseString(adapter)
     return {
         ...baseMessage,
-        messageType,
-        length,
         pid,
         channelName,
         message,
     }
 }
 
-const parseParameterDescription: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IParameterDescription>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const parameterTypes = await parseInt32(adapter)
+export function isINotificationResponse(message: IBackendMessage): message is INotificationResponse {
+    return message.messageType === 'A'
+}
+
+/// ParameterDescription
+
+export interface IParameterDescription extends IBackendMessage {
+    messageType:   Byte1          // Byte1('t')
+    length:        Int32          // Int32
+    parameterTypes:Int32[]        // Int32[Int16]
+}
+
+export const parseParameterDescription: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IParameterDescription>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const result_0 = []
+    const count_0 = await parseInt16(adapter)
+    for (let i_0 = 0; i_0 < count_0; ++i_0) {
+        result_0.push(await parseInt32(adapter))
+    }
+    const parameterTypes = result_0
     return {
         ...baseMessage,
-        messageType,
-        length,
         parameterTypes,
     }
 }
 
-const parseParameterStatus: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IParameterStatus>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const name = await parseString(adapter)
-    export const value = await parseString(adapter)
+export function isIParameterDescription(message: IBackendMessage): message is IParameterDescription {
+    return message.messageType === 't'
+}
+
+/// ParameterStatus
+
+export interface IParameterStatus extends IBackendMessage {
+    messageType:   Byte1          // Byte1('S')
+    length:        Int32          // Int32
+    name:          String         // String
+    value:         String         // String
+}
+
+export const parseParameterStatus: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IParameterStatus>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const name          = await parseString(adapter)
+    const value         = await parseString(adapter)
     return {
         ...baseMessage,
-        messageType,
-        length,
         name,
         value,
     }
 }
 
-const parseParseComplete: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IParseComplete>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        messageType,
-        length,
-    }
+export function isIParameterStatus(message: IBackendMessage): message is IParameterStatus {
+    return message.messageType === 'S'
 }
 
-const parsePortalSuspended: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IPortalSuspended>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        messageType,
-        length,
-    }
+/// ParseComplete
+
+export interface IParseComplete extends IBackendMessage {
+    messageType:   Byte1          // Byte1('1')
+    length:        Int32          // Int32(4)
 }
 
-const parseReadyForQuery: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IReadyForQuery>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const status = await parse'I' | 'T' | 'E'(adapter)
+export const parseParseComplete: (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IParseComplete>
+  = (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise.resolve(baseMessage as IParseComplete)
+
+export function isIParseComplete(message: IBackendMessage): message is IParseComplete {
+    return message.messageType === '1'
+}
+
+/// PortalSuspended
+
+export interface IPortalSuspended extends IBackendMessage {
+    messageType:   Byte1          // Byte1('s')
+    length:        Int32          // Int32(4)
+}
+
+export const parsePortalSuspended: (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IPortalSuspended>
+  = (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise.resolve(baseMessage as IPortalSuspended)
+
+export function isIPortalSuspended(message: IBackendMessage): message is IPortalSuspended {
+    return message.messageType === 's'
+}
+
+/// ReadyForQuery
+
+export interface IReadyForQuery extends IBackendMessage {
+    messageType:   Byte1          // Byte1('Z')
+    length:        Int32          // Int32(5)
+    status:        Char           // 'I' | 'T' | 'E'
+}
+
+export const parseReadyForQuery: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IReadyForQuery>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const status        = await parseChar(adapter)
     return {
         ...baseMessage,
-        messageType,
-        length,
         status,
     }
 }
 
-const parseIRowDescriptionField: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IRowDescriptionField>
-  = async (adapter, baseMessage) => {
-    export const name = await parseString(adapter)
-    export const tableOid = await parseInt32(adapter)
-    export const columnAttributeNumber = await parseInt16(adapter)
-    export const typeOid = await parseInt32(adapter)
-    export const typeSize = await parseInt16(adapter)
-    export const typeModifier = await parseInt32(adapter)
-    export const isBinary = await parseInt16(adapter)
+export function isIReadyForQuery(message: IBackendMessage): message is IReadyForQuery {
+    return message.messageType === 'Z'
+}
+
+/// IField
+
+export interface IField {
+    name:          String         // String
+    tableOid:      Int32          // Int32
+    attrNo:        Int16          // Int16
+    typeOid:       Int32          // Int32
+    typeSize:      Int16          // Int16
+    typeModifier:  Int32          // Int32
+    isBinary:      Int16          // Int16
+}
+
+export const parseIField: (adapter: DataTypeAdapter) => Promise<IField>
+  = async (adapter: DataTypeAdapter) => {
+    const name          = await parseString(adapter)
+    const tableOid      = await parseInt32(adapter)
+    const attrNo        = await parseInt16(adapter)
+    const typeOid       = await parseInt32(adapter)
+    const typeSize      = await parseInt16(adapter)
+    const typeModifier  = await parseInt32(adapter)
+    const isBinary      = await parseInt16(adapter)
     return {
-        ...baseMessage,
         name,
         tableOid,
-        columnAttributeNumber,
+        attrNo,
         typeOid,
         typeSize,
         typeModifier,
@@ -409,17 +443,32 @@ const parseIRowDescriptionField: (adapter: DataTypeAdapter, baseMessage: IBacken
     }
 }
 
-const parseRowDescription: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IRowDescription>
-  = async (adapter, baseMessage) => {
-    export const messageType = await parseByte1(adapter)
-    export const length = await parseInt32(adapter)
-    export const fields = await parseIRowDescriptionField(adapter)
+// No type guard
+
+/// RowDescription
+
+export interface IRowDescription extends IBackendMessage {
+    messageType:   Byte1          // Byte1('T')
+    length:        Int32          // Int32
+    fields:        IField[]       // IField[Int16]
+}
+
+export const parseRowDescription: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IRowDescription>
+  = async (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => {
+    const result_0 = []
+    const count_0 = await parseInt16(adapter)
+    for (let i_0 = 0; i_0 < count_0; ++i_0) {
+        result_0.push(await parseIField(adapter))
+    }
+    const fields = result_0
     return {
         ...baseMessage,
-        messageType,
-        length,
         fields,
     }
+}
+
+export function isIRowDescription(message: IBackendMessage): message is IRowDescription {
+    return message.messageType === 'T'
 }
 
 /* DO NOT EDIT THIS FILE!!!  It has been generated for your pleasure. */
