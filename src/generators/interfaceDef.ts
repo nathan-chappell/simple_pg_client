@@ -3,16 +3,13 @@ import { InterfacePropertyOptions, DeclOptions } from './options.ts'
 import { stringToLines } from './utils.ts'
 
 export class InterfaceDef {
-    name: string
-    properties: InterfacePropertyOptions[]
-    options: DeclOptions
     _lineTargetLength = 100
 
-    constructor(name: string, properties: InterfacePropertyOptions[], options: DeclOptions = {}) {
-        this.name = name
-        this.properties = properties
-        this.options = options
-    }
+    constructor(
+        public name: string,
+        public properties: InterfacePropertyOptions[],
+        public options: DeclOptions = {}
+    ) {}
 
     _writeCommentLines = (writer: GenWriterBase, alignment: number, comment: string | string[]) => {
         if (!Array.isArray(comment)) comment = [...stringToLines(comment, this._lineTargetLength)]

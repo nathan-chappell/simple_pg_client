@@ -8,7 +8,7 @@ export class GenWriter extends GenWriterBase {
         if (f.options.expressionBody_) {
             writeBody()
         } else {
-            this.withBlock(() => writeBody(this)).newLine()
+            this.withBlock(() => writeBody()).newLine()
         }
         return this
     }

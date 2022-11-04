@@ -3,22 +3,12 @@ import { ParameterDef } from './ParameterDef.ts'
 import { DeclOptions, ParamWriteOptions } from './options.ts'
 
 export class FunctionDef {
-    name: string
-    parameterList: ParameterDef[] = []
-    returnType: string | null = null
-    options: DeclOptions = {}
-
     constructor(
-        name: string,
-        parameterList: ParameterDef[] | null = null,
-        returnType: string | null = null,
-        options: DeclOptions = {}
-    ) {
-        this.name = name
-        this.parameterList = parameterList ?? []
-        this.returnType = returnType
-        this.options = options
-    }
+        public name: string,
+        public parameterList: ParameterDef[],
+        public returnType: string | null = null,
+        public options: DeclOptions = {}
+    ) {}
 
     writeParams(writer: GenWriterBase, options: ParamWriteOptions): GenWriterBase {
         const isMultiLine = this.parameterList.length > 2
