@@ -13,11 +13,6 @@ export class GenWriter extends GenWriterBase {
         return this
     }
 
-    writeTypeDef(name: string, def: string, options: DeclOptions = {}): GenWriter {
-        if (options.export_) this.write('export ')
-        return this.writeLine('type ', name, ' = ', def) as GenWriter
-    }
-
     writeImports(names: string[], from: string): GenWriter {
         this.write('import ')
         if (names.length == 1) {
@@ -28,6 +23,11 @@ export class GenWriter extends GenWriterBase {
             })
         }
         return this.writeLine(" from '", from, "'") as GenWriter
+    }
+
+    writeTypeDef(name: string, def: string, options: DeclOptions = {}): GenWriter {
+        if (options.export_) this.write('export ')
+        return this.writeLine('type ', name, ' = ', def) as GenWriter
     }
 
     withRegion(name: string, cb: () => void): GenWriter {

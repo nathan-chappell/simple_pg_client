@@ -1,25 +1,9 @@
-class LineSpec {
-    line: string
-    indent: number
-    aligned: boolean
-    _spacesPerIndent = 4
+import { ICompiler } from "./ICompiler.ts";
+import { IComponentWriter } from "./IComponentWriter";
+import { IGenWriterBase } from "./IGenWriterBase.ts";
+import { LineSpec } from "./lineSpec.ts";
 
-    constructor(line: string = '', indent = 0, aligned = false) {
-        this.line = line
-        this.indent = indent
-        this.aligned = aligned
-    }
-
-    getIndent() {
-        return ' '.repeat(this._spacesPerIndent * this.indent)
-    }
-
-    compile(): string {
-        return this.aligned ? this.line : this.getIndent() + this.line
-    }
-}
-
-export class GenWriterBase {
+export class GenWriterBase implements IGenWriterBase, ICompiler {
     _lines: LineSpec[] = [new LineSpec()]
     _indent = 0
 
@@ -44,6 +28,10 @@ export class GenWriterBase {
             this.write(' '.repeat(column - this.column))
         }
         return this
+    }
+
+    alignIf(column: unknown): GenWriterBase {
+        return typeof column === 'number' ? this.align(column) : this
     }
 
     indent(n = 1): GenWriterBase {
@@ -100,6 +88,10 @@ export class GenWriterBase {
     writeLineIf(condition: boolean, ...content: string[]): GenWriterBase {
         if (condition) this.writeLine(...content)
         return this
+    }
+
+    callWriter(writer: IComponentWriter): IGenWriterBase {
+        return writer.write(this)
     }
 
     compile(): string {

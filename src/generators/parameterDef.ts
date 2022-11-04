@@ -1,14 +1,20 @@
-import { GenWriterBase } from './genWriterBase.ts'
+import { IComponentWriter } from './IComponentWriter.ts'
+import { IGenWriterBase } from './IGenWriterBase.ts'
 import { ParamWriteOptions } from './options.ts'
 
-export class ParameterDef {
+export class ParameterDef implements IComponentWriter {
     constructor(
         public name: string,
         public type: string,
-        public default_: string | null = null
+        public default_: string | null = null,
+        public options: ParamWriteOptions = {}
     ) {}
 
-    write(writer: GenWriterBase, options: ParamWriteOptions): GenWriterBase {
+    write(writer: IGenWriterBase): IGenWriterBase {
+        return this.writeWithOptions(writer, this.options)
+    }
+
+    writeWithOptions(writer: IGenWriterBase, options: ParamWriteOptions): GenWriterBase {
         writer.write(`${this.name}`)
         if (options.withType) writer.write(`: ${this.type}`)
         if (options.withDefault && this.default_ !== null) {

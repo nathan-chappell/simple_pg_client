@@ -2,6 +2,8 @@ import { GenWriterBase } from './genWriterBase.ts'
 import { ParameterDef } from './ParameterDef.ts'
 import { DeclOptions, ParamWriteOptions } from './options.ts'
 
+// NOTE: intentionally not IComponentWriter...
+//  it's not clear what its write() method would do yet
 export class FunctionDef {
     constructor(
         public name: string,
@@ -18,7 +20,7 @@ export class FunctionDef {
             })
         } else {
             for (let i = 0; i < this.parameterList.length; ++i) {
-                this.parameterList[i].write(writer, options).writeIf(i < this.parameterList.length - 1, ', ')
+                this.parameterList[i].writeWithOptions(writer, options).writeIf(i < this.parameterList.length - 1, ', ')
             }
         }
         return writer

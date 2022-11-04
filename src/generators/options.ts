@@ -17,3 +17,10 @@ export interface InterfacePropertyOptions {
     optional?: boolean
     comment?: string | string[]
 }
+
+export interface VariableOptions {
+    const_?: boolean
+    initializer_?: string
+    initAlignment?: number
+    typeAlignment?: number
+}
