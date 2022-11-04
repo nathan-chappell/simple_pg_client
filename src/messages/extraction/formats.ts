@@ -1,18 +1,18 @@
-export interface IProperty {
+export interface IMessageField {
     name: string
     type: string
     definition: string
 }
 
-export interface IMessageDef {
+export interface IMessageFormat {
     internal?: boolean
     backend?: boolean
     frontend?: boolean
     title: string
-    definition: IProperty[]
+    definition: IMessageField[]
 }
 
-export const formats: IMessageDef[] = [
+export const formats: IMessageFormat[] = [
     {
         internal: true,
         backend: true,

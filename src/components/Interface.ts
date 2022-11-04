@@ -1,8 +1,9 @@
-import { GenWriterBase } from './genWriterBase.ts'
+import { ITextCompiler } from '../compilers/ITextCompiler.ts'
+import { Block } from '../structures/Block.ts'
 import { InterfacePropertyOptions, DeclOptions } from './options.ts'
 import { stringToLines } from './utils.ts'
 
-export class InterfaceDef {
+export class Interface {
     _lineTargetLength = 100
 
     constructor(
@@ -11,10 +12,10 @@ export class InterfaceDef {
         public options: DeclOptions = {}
     ) {}
 
-    _writeCommentLines = (writer: GenWriterBase, alignment: number, comment: string | string[]) => {
+    _writeCommentLines = (compiler: ITextCompiler, alignment: number, comment: string | string[]) => {
         if (!Array.isArray(comment)) comment = [...stringToLines(comment, this._lineTargetLength)]
         for (const commentLine of comment) {
-            writer.align(alignment).writeLine('// ', commentLine)
+            compiler.align(alignment).writeLine('// ', commentLine)
         }
     }
 
@@ -43,25 +44,25 @@ export class InterfaceDef {
         }
     }
 
-    write(writer: GenWriterBase): GenWriterBase {
+    write(compiler: ITextCompiler): ITextCompiler {
         const { propAlignment, typeAlignment, commentAlignment, commentBeforeProp } = this._analyze()
 
-        if (this.options.export_) writer.write('export ')
-        writer.write('interface ', this.name, ' ').withBlock(() => {
+        if (this.options.export_) compiler.write('export ')
+        compiler.write('interface ', this.name, ' ').build(new Block(), () => {
             for (const property of this.properties) {
                 if (commentBeforeProp && property.comment)
-                    this._writeCommentLines(writer, propAlignment, property.comment)
-                writer
+                    this._writeCommentLines(compiler, propAlignment, property.comment)
+                compiler
                     .align(propAlignment)
                     .write(property.name, ':')
                     .align(typeAlignment)
                     .write(property.type)
                 if (!commentBeforeProp && typeof property.comment === 'string') {
-                    writer.align(commentAlignment).write(' // ', property.comment)
+                    compiler.align(commentAlignment).write(' // ', property.comment)
                 }
-                writer.newLine()
+                compiler.newLine()
             }
         })
-        return writer.writeLine(' // ', this.name).newLine()
+        return compiler.writeLine(' // ', this.name).newLine()
     }
 }
