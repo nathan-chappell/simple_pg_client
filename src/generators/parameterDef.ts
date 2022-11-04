@@ -14,7 +14,7 @@ export class ParameterDef implements IComponentWriter {
         return this.writeWithOptions(writer, this.options)
     }
 
-    writeWithOptions(writer: IGenWriterBase, options: ParamWriteOptions): GenWriterBase {
+    writeWithOptions(writer: IGenWriterBase, options: ParamWriteOptions): IGenWriterBase {
         writer.write(`${this.name}`)
         if (options.withType) writer.write(`: ${this.type}`)
         if (options.withDefault && this.default_ !== null) {

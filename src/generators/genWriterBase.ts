@@ -1,5 +1,5 @@
 import { ICompiler } from "./ICompiler.ts";
-import { IComponentWriter } from "./IComponentWriter";
+import { IComponentWriter } from "./IComponentWriter.ts";
 import { IGenWriterBase } from "./IGenWriterBase.ts";
 import { LineSpec } from "./lineSpec.ts";
 

@@ -1,5 +1,5 @@
 import { GenWriterBase } from './genWriterBase.ts'
-import { ParameterDef } from './ParameterDef.ts'
+import { ParameterDef } from './parameterDef.ts'
 import { DeclOptions, ParamWriteOptions } from './options.ts'
 
 // NOTE: intentionally not IComponentWriter...
@@ -16,11 +16,14 @@ export class FunctionDef {
         const isMultiLine = this.parameterList.length > 2
         if (isMultiLine) {
             writer.newLine().withIndent(1, () => {
-                for (const parameter of this.parameterList) parameter.write(writer, options).writeLine(',')
+                for (const parameter of this.parameterList)
+                    parameter.writeWithOptions(writer, options).writeLine(',')
             })
         } else {
             for (let i = 0; i < this.parameterList.length; ++i) {
-                this.parameterList[i].writeWithOptions(writer, options).writeIf(i < this.parameterList.length - 1, ', ')
+                this.parameterList[i]
+                    .writeWithOptions(writer, options)
+                    .writeIf(i < this.parameterList.length - 1, ', ')
             }
         }
         return writer

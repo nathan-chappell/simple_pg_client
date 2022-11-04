@@ -1,4 +1,4 @@
-export function* stringToLines(s: string, targetLength): Generator<string, void, undefined> {
+export function* stringToLines(s: string, targetLength: number): Generator<string, void, undefined> {
     // turn \n into a "force-break"
     s = s.replace(/\n+/g, ' '.repeat(targetLength) + '* ')
     let line: string[] = []
