@@ -91,21 +91,28 @@ type TArraySizeInfo = ('Int16' | 'Int32')[]
 
 interface ITypeInfo {
     arraySizeInfo: TArraySizeInfo
+    arraySizeInfoString: string
     expected: string | null
     rawName: string
     typeNoArray: string
     typeNoExpected: string
+    itemType: string
     typeScriptName: string
 }
 
 const getArraySizeInfo: (rawName: string) => TArraySizeInfo = (rawName: string) =>
     [...rawName.matchAll(/\[(Int16|Int32)\]/g)].map(m => m[1]).reverse() as TArraySizeInfo
 
+const arraySizeInfoToString = (info: TArraySizeInfo) =>
+    info
+        .map(t => `[${t}]`)
+        .reverse()
+        .join('')
+
 const substrTo = (s: string, c: string) => (s.includes(c) ? s.substring(0, s.indexOf(c)) : s)
 const getTypeNoArray = (rawName: string) => substrTo(rawName, '[')
 const getTypeNoExpected = (rawName: string) => substrTo(rawName, '(')
-const getExpected = (rawName: string) =>
-    (rawName.match(/[^(]*\((?<expected>[^)]*)\)/)?.groups ?? {}).expected ?? null
+const getExpected = (rawName: string) => (rawName.match(/[^(]*\((?<expected>[^)]*)\)/)?.groups ?? {}).expected ?? null
 
 const getTypeScriptName = (rawName: string) => {
     const typeNoExpected = getTypeNoExpected(rawName)
@@ -132,13 +139,17 @@ const getTypeScriptName = (rawName: string) => {
 const getTypeInfo: (rawName: string) => ITypeInfo = rawName => {
     const typeScriptName = getTypeScriptName(rawName)
     const typeNoArray = getTypeNoArray(rawName)
-    const typeNoExpected = getTypeNoExpected(getTypeNoArray(rawName))
+    const typeNoExpected = getTypeNoExpected(rawName)
+    const itemType = getTypeNoExpected(getTypeNoArray(rawName))
     const arraySizeInfo = getArraySizeInfo(rawName)
+    const arraySizeInfoString = arraySizeInfoToString(arraySizeInfo)
     const expected = getExpected(rawName)
 
     return {
         arraySizeInfo,
+        arraySizeInfoString,
         expected,
+        itemType,
         rawName,
         typeNoArray,
         typeNoExpected,
@@ -175,11 +186,7 @@ const genInterface = (messageDef: IMessageDef) => {
         const baseInterface = getBaseInterface(interfaceName)
         const extendsClause = messageDef.frontend || baseInterface === '' ? '' : `extends ${baseInterface} `
 
-        return [
-            `export interface ${interfaceName} ${extendsClause}{`,
-            ...properties.map(indent(4)),
-            `}`,
-        ].join('\n')
+        return [`export interface ${interfaceName} ${extendsClause}{`, ...properties.map(indent(4)), `}`].join('\n')
     } catch (e) {
         throw new Error(`Error creating type ${messageDef.title}: ${e}`)
     }
@@ -282,8 +289,7 @@ const genParser = (messageDef: IMessageDef) => {
 const genTypeGuard = (messageDef: IMessageDef) => {
     const messageTypeInfo = getTypeInfo(messageDef.title)
     const parameterTypeInfo = getTypeInfo(messageDef.definition[0].type)
-    if (!parameterTypeInfo.expected)
-        throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
+    if (!parameterTypeInfo.expected) throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
     const open = `export function is${messageTypeInfo.typeScriptName}(message: IBackendMessage): message is ${messageTypeInfo.typeScriptName} {`
     const body = `return message.messageType === ${parameterTypeInfo.expected}`
     const close = '}'
@@ -312,8 +318,7 @@ export const parseAuthenticationMessage: (adapter: DataTypeAdapter, baseMessage:
 const genBackendAuthenticationTypeGuard = (messageDef: IMessageDef) => {
     const messageTypeInfo = getTypeInfo(messageDef.title)
     const parameterTypeInfo = getTypeInfo(messageDef.definition[2].type)
-    if (!parameterTypeInfo.expected)
-        throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
+    if (!parameterTypeInfo.expected) throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
     const open = `export function is${messageTypeInfo.typeScriptName}(message: IBackendMessage): message is ${messageTypeInfo.typeScriptName} {`
     const body = `return isAuthenticationMessage(message) && message.code === ${parameterTypeInfo.expected}`
     const close = '}'
@@ -350,8 +355,7 @@ export function isAuthenticationMessage(message: IBackendMessage): message is IA
 const genCaseForMessageDef = (messageDef: IMessageDef) => {
     const messageTypeInfo = getTypeInfo(messageDef.title)
     const parameterTypeInfo = getTypeInfo(messageDef.definition[0].type)
-    if (!parameterTypeInfo.expected)
-        throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
+    if (!parameterTypeInfo.expected) throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
     return `case ${parameterTypeInfo.expected}: return parse${messageTypeInfo.rawName}(adapter, baseMessage)`
 }
 
@@ -377,31 +381,48 @@ ${backendNonAuthenticationFormats
 const genMessageWriter = (messageDef: IMessageDef) => {
     // const messageTypeInterface = genInterface(messageDef)
     // const messageTypeProperties = messageDef.definition.map(getInterfaceProperty)
-    const nonDefaultProperties = messageDef.definition.filter(
-        p => p.name !== 'length' && p.name !== 'messageType'
-    )
+    const nonDefaultProperties = messageDef.definition.filter(p => p.name !== 'length' && p.name !== 'messageType')
 
     const messageTypeParameterList = nonDefaultProperties.map(property => {
         const propertyTypeInfo = getTypeInfo(property.type)
         return `${property.name}: ${propertyTypeInfo.typeScriptName}`
     })
 
-    const messageTypeTVList = nonDefaultProperties.map(property => {
-        const propertyTypeInfo = getTypeInfo(property.type)
-        return `{type: '${propertyTypeInfo.typeScriptName}', value: ${property.name}, name: '${property.name}'}`
-    })
+    const mapPropertyToTvItem = (property: IProperty, valueAsExpected = false) => {
+        const typeInfo = getTypeInfo(property.type)
+        const expected = (typeInfo.expected?.match(/'(.)'|(\d+)/) || [null, null])[1]
+        if (expected === null && valueAsExpected)
+            throw new Error(`[mapPropertyToTvItem] invalid expected value: ${JSON.stringify(property)}`)
+
+        const type = typeInfo.itemType === 'Byte1' ? 'Int8' : typeInfo.itemType
+
+        const value = !valueAsExpected 
+            ? property.name
+            : typeof expected === 'string' ? expected.charCodeAt(0) : expected
+        
+        const sizeInfo = typeInfo.arraySizeInfoString ? `${typeInfo.arraySizeInfoString}` : ""
+
+        return alignOnColumn(
+            `{type: '${type}',`,
+            20,
+            alignOnColumn(`name: '${property.name}',`, 23, `value: ${value}}`)
+        )
+    }
+
+    const messageTypeTVList = nonDefaultProperties.map(p => mapPropertyToTvItem(p,false))
 
     const messageTypeProperty = messageDef.definition.find(p => p.name === 'messageType')
     if (messageTypeProperty) {
-        const messageTypeTypeInfo = getTypeInfo(messageTypeProperty.type)
-        const expected = (messageTypeTypeInfo.expected?.match(/'(.)'|(\d+)/) || [null, null])[1]
-        if (expected === null) {
-            throw new Error(`[genMessageWriter] invalid expected message type: ${JSON.stringify(messageDef)}`)
-        } else {
-            const _expected = typeof expected === 'string' ? expected.charCodeAt(0) : expected;
-            const _type = messageTypeTypeInfo.typeScriptName === 'Byte1' ? 'Int8' : messageTypeTypeInfo.typeScriptName;
-            messageTypeTVList.unshift(`{ type: '${_type}', name: 'messageType', value: ${_expected} }`)
-        }
+        messageTypeTVList.unshift(mapPropertyToTvItem(messageTypeProperty, true));
+        // const messageTypeTypeInfo = getTypeInfo(messageTypeProperty.type)
+        // const expected = (messageTypeTypeInfo.expected?.match(/'(.)'|(\d+)/) || [null, null])[1]
+        // if (expected === null) {
+        //     throw new Error(`[genMessageWriter] invalid expected message type: ${JSON.stringify(messageDef)}`)
+        // } else {
+        //     const _expected = typeof expected === 'string' ? expected.charCodeAt(0) : expected
+        //     const _type = messageTypeTypeInfo.itemType === 'Byte1' ? 'Int8' : messageTypeTypeInfo.itemType
+        //     messageTypeTVList.unshift(`{type: '${_type}', name: 'messageType', value: ${_expected} }`)
+        // }
     }
 
     const parameterList = [`messageWriterAdapter: MessageWriterAdapter`, ...messageTypeParameterList]

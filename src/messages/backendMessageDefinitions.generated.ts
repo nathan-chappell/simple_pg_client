@@ -626,12 +626,12 @@ export const writeBind: (messageWriterAdapter: MessageWriterAdapter, portalName:
     parameters: Byte[][],
     rFormats: Int16[]
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 66 },
-        {type: 'String', value: portalName, name: 'portalName'},
-        {type: 'String', value: statementName, name: 'statementName'},
-        {type: 'Int16[]', value: pFormats, name: 'pFormats'},
-        {type: 'Byte[][]', value: parameters, name: 'parameters'},
-        {type: 'Int16[]', value: rFormats, name: 'rFormats'}
+        {type: 'Int8',      name: 'messageType',   value: 66},
+        {type: 'String',    name: 'portalName',    value: portalName},
+        {type: 'String',    name: 'statementName', value: statementName},
+        {type: 'Int16',     name: 'pFormats',      value: pFormats},
+        {type: 'Byte',      name: 'parameters',    value: parameters},
+        {type: 'Int16',     name: 'rFormats',      value: rFormats}
 ])
 
 
@@ -642,9 +642,9 @@ export const writeCancelRequest: (messageWriterAdapter: MessageWriterAdapter, pi
     pid: Int32,
     key: Int32
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int32', name: 'messageType', value: undefined },
-        {type: 'Int32', value: pid, name: 'pid'},
-        {type: 'Int32', value: key, name: 'key'}
+        {type: 'Int32',     name: 'messageType',   value: undefined},
+        {type: 'Int32',     name: 'pid',           value: pid},
+        {type: 'Int32',     name: 'key',           value: key}
 ])
 
 
@@ -655,9 +655,9 @@ export const writeClose: (messageWriterAdapter: MessageWriterAdapter, qType: Cha
     qType: Char,
     name: String
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 67 },
-        {type: 'Char', value: qType, name: 'qType'},
-        {type: 'String', value: name, name: 'name'}
+        {type: 'Int8',      name: 'messageType',   value: 67},
+        {type: ''S' | 'P'', name: 'qType',         value: qType},
+        {type: 'String',    name: 'name',          value: name}
 ])
 
 
@@ -667,8 +667,8 @@ export const writeCopyFail: (messageWriterAdapter: MessageWriterAdapter, message
     messageWriterAdapter: MessageWriterAdapter,
     message: String
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 102 },
-        {type: 'String', value: message, name: 'message'}
+        {type: 'Int8',      name: 'messageType',   value: 102},
+        {type: 'String',    name: 'message',       value: message}
 ])
 
 
@@ -679,9 +679,9 @@ export const writeDescribe: (messageWriterAdapter: MessageWriterAdapter, qType: 
     qType: Byte1,
     name: String
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 68 },
-        {type: 'Byte1', value: qType, name: 'qType'},
-        {type: 'String', value: name, name: 'name'}
+        {type: 'Int8',      name: 'messageType',   value: 68},
+        {type: 'Int8',      name: 'qType',         value: qType},
+        {type: 'String',    name: 'name',          value: name}
 ])
 
 
@@ -692,9 +692,9 @@ export const writeExecute: (messageWriterAdapter: MessageWriterAdapter, name: St
     name: String,
     limit: Int32
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 69 },
-        {type: 'String', value: name, name: 'name'},
-        {type: 'Int32', value: limit, name: 'limit'}
+        {type: 'Int8',      name: 'messageType',   value: 69},
+        {type: 'String',    name: 'name',          value: name},
+        {type: 'Int32',     name: 'limit',         value: limit}
 ])
 
 
@@ -703,7 +703,7 @@ export const writeFlush: (messageWriterAdapter: MessageWriterAdapter) => Promise
   = (
     messageWriterAdapter: MessageWriterAdapter
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 72 }
+        {type: 'Int8',      name: 'messageType',   value: 72}
 ])
 
 
@@ -715,10 +715,10 @@ export const writeParse: (messageWriterAdapter: MessageWriterAdapter, name: Stri
     query: String,
     pTypes: Int32[]
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 80 },
-        {type: 'String', value: name, name: 'name'},
-        {type: 'String', value: query, name: 'query'},
-        {type: 'Int32[]', value: pTypes, name: 'pTypes'}
+        {type: 'Int8',      name: 'messageType',   value: 80},
+        {type: 'String',    name: 'name',          value: name},
+        {type: 'String',    name: 'query',         value: query},
+        {type: 'Int32',     name: 'pTypes',        value: pTypes}
 ])
 
 
@@ -728,8 +728,8 @@ export const writePasswordMessage: (messageWriterAdapter: MessageWriterAdapter, 
     messageWriterAdapter: MessageWriterAdapter,
     password: String
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 112 },
-        {type: 'String', value: password, name: 'password'}
+        {type: 'Int8',      name: 'messageType',   value: 112},
+        {type: 'String',    name: 'password',      value: password}
 ])
 
 
@@ -739,8 +739,8 @@ export const writeQuery: (messageWriterAdapter: MessageWriterAdapter, query: Str
     messageWriterAdapter: MessageWriterAdapter,
     query: String
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 81 },
-        {type: 'String', value: query, name: 'query'}
+        {type: 'Int8',      name: 'messageType',   value: 81},
+        {type: 'String',    name: 'query',         value: query}
 ])
 
 
@@ -749,7 +749,7 @@ export const writeSSLRequest: (messageWriterAdapter: MessageWriterAdapter) => Pr
   = (
     messageWriterAdapter: MessageWriterAdapter
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int32', name: 'messageType', value: undefined }
+        {type: 'Int32',     name: 'messageType',   value: undefined}
 ])
 
 
@@ -759,7 +759,7 @@ export const writeStartupMessage: (messageWriterAdapter: MessageWriterAdapter, p
     messageWriterAdapter: MessageWriterAdapter,
     protocol: Int32
 ) => messageWriterAdapter.writeMessage([
-        {type: 'Int32', value: protocol, name: 'protocol'}
+        {type: 'Int32',     name: 'protocol',      value: protocol}
 ])
 
 
@@ -768,7 +768,7 @@ export const writeSync: (messageWriterAdapter: MessageWriterAdapter) => Promise<
   = (
     messageWriterAdapter: MessageWriterAdapter
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 83 }
+        {type: 'Int8',      name: 'messageType',   value: 83}
 ])
 
 
@@ -777,7 +777,7 @@ export const writeTerminate: (messageWriterAdapter: MessageWriterAdapter) => Pro
   = (
     messageWriterAdapter: MessageWriterAdapter
 ) => messageWriterAdapter.writeMessage([
-        { type: 'Int8', name: 'messageType', value: 88 }
+        {type: 'Int8',      name: 'messageType',   value: 88}
 ])
 
 
