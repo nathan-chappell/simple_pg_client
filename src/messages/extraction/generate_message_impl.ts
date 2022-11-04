@@ -1,5 +1,7 @@
 import { writeFileSync } from 'https://deno.land/std@0.161.0/node/fs.ts'
 import { formats, IProperty, IMessageDef } from './formats.ts'
+import { ParameterDef, FunctionDef, GenWriter } from '../../generators/genWriter.ts'
+import { GenWriterBase } from '../../generators/genWriterBase.ts'
 
 const validateStartup = () => {
     const cwd = Deno.cwd()
@@ -32,14 +34,14 @@ const backendNonAuthenticationFormats = formats.filter(f => f.backend && !f.titl
 const nonInternalMessageDefs = new Set(formats.filter(f => !f.internal).map(f => f.title))
 const internalMessageDefs = new Set(formats.filter(f => f.internal).map(f => f.title))
 
-// const builtinTypes: { [type: string]: { [attr: string]: string } } = {
+//prettier-ignore
 const builtinTypes: { [type: string]: { jsType: string; adapterType: string } } = {
-    Int32: { jsType: 'number', adapterType: 'Int32' },
-    Int16: { jsType: 'number', adapterType: 'Int16' },
-    Int8: { jsType: 'number', adapterType: 'Int8' },
-    Byte: { jsType: 'number', adapterType: 'Int8' },
-    Byte1: { jsType: 'string', adapterType: 'Char' },
-    Char: { jsType: 'string', adapterType: 'Char' },
+    Int32:  { jsType: 'number', adapterType: 'Int32'  },
+    Int16:  { jsType: 'number', adapterType: 'Int16'  },
+    Int8:   { jsType: 'number', adapterType: 'Int8'   },
+    Byte:   { jsType: 'number', adapterType: 'Int8'   },
+    Byte1:  { jsType: 'string', adapterType: 'Char'   },
+    Char:   { jsType: 'string', adapterType: 'Char'   },
     String: { jsType: 'string', adapterType: 'String' },
 }
 
@@ -59,28 +61,36 @@ ${[...Object.keys(builtinTypes)].map(t => `parse${t},`).map(indent(4)).join('\n'
 
 //#region builtins
 
-const getBuiltinTypeAttr = (type: string, attr: 'jsType' | 'adapterType') => {
-    const attrValue = (builtinTypes[type] || {})[attr]
-    if (attrValue === undefined) throw new Error(`[getBuiltinTypeAttr] couldn't find ${type}.${attr}`)
-    return attrValue
-}
+const genBuiltins2 = (writer: GenWriter) => {
+    writer.writeLine(dataAdapterImport)
+    writer.newLine()
+    const fnWriters: (() => void)[] = []
+    for (const name of Object.keys(builtinTypes)) {
+        const { jsType, adapterType } = builtinTypes[name]
+        if (jsType === undefined) throw new Error(`failed to get jsType for ${name}`)
+        if (adapterType === undefined) throw new Error(`failed to get adapterType for ${name}`)
 
-const genBuiltins = () => {
-    const genTypeExport = (name: string) => `export type ${name} = ${getBuiltinTypeAttr(name, 'jsType')};`
-    const genParserDefinition = (name: string) =>
-        `export const parse${name} = (adapter: DataTypeAdapter) => adapter.read${getBuiltinTypeAttr(
-            name,
-            'adapterType'
-        )}();`
+        writer.writeTypeDef(name, jsType, { export_: true })
 
-    /// FILE
-    return `
-${dataAdapterImport}
-
-${Object.keys(builtinTypes).map(genTypeExport).join('\n')}
-
-${Object.keys(builtinTypes).map(genParserDefinition).join('\n')}
-`
+        const functionDef = new FunctionDef(
+            `parse${name}`,
+            [new ParameterDef('adapter', 'DataTypeAdapter')],
+            `Promise<${name}>`,
+            {
+                export_: true,
+                arrow_: true,
+                const_: true,
+                expressionBody_: true,
+            }
+        )
+        const writeBody = (writer: GenWriterBase) => {
+            writer.writeLine(`adapter.read${adapterType}()`)
+        }
+        fnWriters.push(() => writer.writeFunction(functionDef, writeBody))
+    }
+    writer.newLine()
+    for (const fnWriter of fnWriters) fnWriter()
+    writer.newLine()
 }
 
 //#endregion
@@ -112,7 +122,8 @@ const arraySizeInfoToString = (info: TArraySizeInfo) =>
 const substrTo = (s: string, c: string) => (s.includes(c) ? s.substring(0, s.indexOf(c)) : s)
 const getTypeNoArray = (rawName: string) => substrTo(rawName, '[')
 const getTypeNoExpected = (rawName: string) => substrTo(rawName, '(')
-const getExpected = (rawName: string) => (rawName.match(/[^(]*\((?<expected>[^)]*)\)/)?.groups ?? {}).expected ?? null
+const getExpected = (rawName: string) =>
+    (rawName.match(/[^(]*\((?<expected>[^)]*)\)/)?.groups ?? {}).expected ?? null
 
 const getTypeScriptName = (rawName: string) => {
     const typeNoExpected = getTypeNoExpected(rawName)
@@ -186,7 +197,11 @@ const genInterface = (messageDef: IMessageDef) => {
         const baseInterface = getBaseInterface(interfaceName)
         const extendsClause = messageDef.frontend || baseInterface === '' ? '' : `extends ${baseInterface} `
 
-        return [`export interface ${interfaceName} ${extendsClause}{`, ...properties.map(indent(4)), `}`].join('\n')
+        return [
+            `export interface ${interfaceName} ${extendsClause}{`,
+            ...properties.map(indent(4)),
+            `}`,
+        ].join('\n')
     } catch (e) {
         throw new Error(`Error creating type ${messageDef.title}: ${e}`)
     }
@@ -289,7 +304,8 @@ const genParser = (messageDef: IMessageDef) => {
 const genTypeGuard = (messageDef: IMessageDef) => {
     const messageTypeInfo = getTypeInfo(messageDef.title)
     const parameterTypeInfo = getTypeInfo(messageDef.definition[0].type)
-    if (!parameterTypeInfo.expected) throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
+    if (!parameterTypeInfo.expected)
+        throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
     const open = `export function is${messageTypeInfo.typeScriptName}(message: IBackendMessage): message is ${messageTypeInfo.typeScriptName} {`
     const body = `return message.messageType === ${parameterTypeInfo.expected}`
     const close = '}'
@@ -318,7 +334,8 @@ export const parseAuthenticationMessage: (adapter: DataTypeAdapter, baseMessage:
 const genBackendAuthenticationTypeGuard = (messageDef: IMessageDef) => {
     const messageTypeInfo = getTypeInfo(messageDef.title)
     const parameterTypeInfo = getTypeInfo(messageDef.definition[2].type)
-    if (!parameterTypeInfo.expected) throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
+    if (!parameterTypeInfo.expected)
+        throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
     const open = `export function is${messageTypeInfo.typeScriptName}(message: IBackendMessage): message is ${messageTypeInfo.typeScriptName} {`
     const body = `return isAuthenticationMessage(message) && message.code === ${parameterTypeInfo.expected}`
     const close = '}'
@@ -355,7 +372,8 @@ export function isAuthenticationMessage(message: IBackendMessage): message is IA
 const genCaseForMessageDef = (messageDef: IMessageDef) => {
     const messageTypeInfo = getTypeInfo(messageDef.title)
     const parameterTypeInfo = getTypeInfo(messageDef.definition[0].type)
-    if (!parameterTypeInfo.expected) throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
+    if (!parameterTypeInfo.expected)
+        throw new Error(`Cant make type predicate for def: ${JSON.stringify(messageDef)}`)
     return `case ${parameterTypeInfo.expected}: return parse${messageTypeInfo.rawName}(adapter, baseMessage)`
 }
 
@@ -381,7 +399,9 @@ ${backendNonAuthenticationFormats
 const genMessageWriter = (messageDef: IMessageDef) => {
     // const messageTypeInterface = genInterface(messageDef)
     // const messageTypeProperties = messageDef.definition.map(getInterfaceProperty)
-    const nonDefaultProperties = messageDef.definition.filter(p => p.name !== 'length' && p.name !== 'messageType')
+    const nonDefaultProperties = messageDef.definition.filter(
+        p => p.name !== 'length' && p.name !== 'messageType'
+    )
 
     const messageTypeParameterList = nonDefaultProperties.map(property => {
         const propertyTypeInfo = getTypeInfo(property.type)
@@ -396,11 +416,13 @@ const genMessageWriter = (messageDef: IMessageDef) => {
 
         const type = typeInfo.itemType === 'Byte1' ? 'Int8' : typeInfo.itemType
 
-        const value = !valueAsExpected 
+        const value = !valueAsExpected
             ? property.name
-            : typeof expected === 'string' ? expected.charCodeAt(0) : expected
-        
-        const sizeInfo = typeInfo.arraySizeInfoString ? `${typeInfo.arraySizeInfoString}` : ""
+            : typeof expected === 'string'
+            ? expected.charCodeAt(0)
+            : expected
+
+        const sizeInfo = typeInfo.arraySizeInfoString ? `${typeInfo.arraySizeInfoString}` : ''
 
         return alignOnColumn(
             `{type: '${type}',`,
@@ -409,11 +431,11 @@ const genMessageWriter = (messageDef: IMessageDef) => {
         )
     }
 
-    const messageTypeTVList = nonDefaultProperties.map(p => mapPropertyToTvItem(p,false))
+    const messageTypeTVList = nonDefaultProperties.map(p => mapPropertyToTvItem(p, false))
 
     const messageTypeProperty = messageDef.definition.find(p => p.name === 'messageType')
     if (messageTypeProperty) {
-        messageTypeTVList.unshift(mapPropertyToTvItem(messageTypeProperty, true));
+        messageTypeTVList.unshift(mapPropertyToTvItem(messageTypeProperty, true))
         // const messageTypeTypeInfo = getTypeInfo(messageTypeProperty.type)
         // const expected = (messageTypeTypeInfo.expected?.match(/'(.)'|(\d+)/) || [null, null])[1]
         // if (expected === null) {
@@ -453,6 +475,17 @@ const genFile = (fileName: string, genFile: () => string) => {
     console.log(`[genFile] Generating file ${fileName} complete`)
 }
 
+const genFile2 = (fileName: string, writeFile: (writer: GenWriter) => void) => {
+    const path = `./src/messages/${fileName}.generated.ts`
+    console.log(`[genFile2] Generating file ${fileName} ...`)
+    const writer = new GenWriter()
+    writeFile(writer)
+    /// FILE
+    const file = `${warning}\n${writer.compile()}\n${warning}`
+    writeFileSync(path, file)
+    console.log(`[genFile2] Generating file ${fileName} complete`)
+}
+
 const getCodeForMessageDef = (messageDef: IMessageDef) => {
     const header = `/// ${messageDef.title}`
     const interface_ = genInterface(messageDef)
@@ -488,5 +521,7 @@ ${formats
 
 genFile(builtinsFileName, genBuiltins)
 genFile(backendMessageDefsFileName, genBackendMessageDefs)
+
+genFile2('builtin2', genBuiltins2)
 
 //#endregion
