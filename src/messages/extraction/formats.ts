@@ -500,21 +500,21 @@ export const formats: IMessageDef[] = [
     //         },
     //     ],
     // },
-    {
-        "title": "CopyDone (F & B)",
-        "definition": [
-            {
-                "name": "messageType",
-                "type": "Byte1('c')",
-                "definition": "Identifies the message as a COPY-complete indicator.",
-            },
-            {
-                "name": "length",
-                "type": "Int32(4)",
-                "definition": "Length of message contents in bytes, including self.",
-            },
-        ],
-    },
+    // {
+    //     "title": "CopyDone (F & B)",
+    //     "definition": [
+    //         {
+    //             "name": "messageType",
+    //             "type": "Byte1('c')",
+    //             "definition": "Identifies the message as a COPY-complete indicator.",
+    //         },
+    //         {
+    //             "name": "length",
+    //             "type": "Int32(4)",
+    //             "definition": "Length of message contents in bytes, including self.",
+    //         },
+    //     ],
+    // },
     {
         frontend: true,
         "title": "CopyFail",
