@@ -1,4 +1,4 @@
-export class Configurable<TOptions> {
+export class Configurable<TOptions = Record<never, never>> {
     options: TOptions
     constructor(defaultOptions: TOptions) {
         this.options = defaultOptions

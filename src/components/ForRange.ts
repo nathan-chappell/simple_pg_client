@@ -6,7 +6,7 @@ import { IComponent } from './IComponent.ts'
 import { IStructure } from '../structures/IStructure.ts'
 import { Configurable } from '../Configurable.ts'
 
-export class ForRange extends Configurable<Record<never, never>> implements IComponent, IStructure {
+export class ForRange extends Configurable implements IComponent, IStructure {
     constructor(public max: string | number) {
         super({})
     }
