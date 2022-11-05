@@ -481,7 +481,7 @@ const genFile2 = (fileName: string, writeFile: (writer: GenWriter) => void) => {
     const writer = new GenWriter()
     writeFile(writer)
     /// FILE
-    const file = `${warning}\n${compilercompile()}\n${warning}`
+    const file = `${warning}\n${compiler.compile()}\n${warning}`
     writeFileSync(path, file)
     console.log(`[genFile2] Generating file ${fileName} complete`)
 }

@@ -1,13 +1,9 @@
 import { writeFileSync } from 'https://deno.land/std@0.161.0/node/fs.ts'
 import { formats, IMessageField, IMessageFormat } from './formats.ts'
-import { GenWriter } from '../../generators/genWriter.ts'
-import { Function_ } from '../../generators/function.ts'
-import { Parameter } from '../../generators/parameter.ts'
-import { ITextCompiler } from '../../generators/genWriterBase.ts'
-import { InterfacePropertyOptions } from '../../generators/options.ts'
-import { Interface } from '../../generators/interface.ts'
 import { TypeInfo } from './typeInfo.ts'
-import { Variable } from '../../generators/Variable.ts'
+import { ITextCompiler } from '../../compilers/ITextCompiler.ts'
+import { Region } from '../../structures/Region.ts'
+import { TextCompiler } from "../../compilers/TextCompiler.ts";
 
 const validateStartup = () => {
     const cwd = Deno.cwd()
@@ -57,10 +53,13 @@ export const _getArrayType: (rawType: string) => ArrayType = rawType => {
 
 //#region imports
 
-const writeImports = (writer: GenWriter) => {
+const writeImports = (compiler: ITextCompiler) => {
     compiler.writeImports(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts')
     compiler.writeImports(['MessageWriterAdapter'], './messageWriterAdapter.ts')
-    const builtinImports = [...Object.keys(builtinTypes), ...Object.keys(builtinTypes).map(t => `parse${t}`)]
+    const builtinImports = [
+        ...Object.keys(builtinTypes),
+        ...Object.keys(builtinTypes).map(t => `parse${t}`),
+    ]
     compiler.writeImports(builtinImports, `./${builtinsFileName}.generated.ts`)
 }
 
@@ -76,7 +75,7 @@ const builtinFunction_ = (name: string) => new Function_(
     { export_: true, arrow_: true, const_: true, expressionBody_: true, }
 )
 
-const genBuiltins2 = (writer: GenWriter) => {
+const genBuiltins2 = (compiler: ITextCompiler) => {
     compiler.writeImports(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts').newLine()
     const fnDefInfo: [Function_, () => void][] = []
     for (const name of Object.keys(builtinTypes)) {
@@ -161,40 +160,40 @@ class GenPropertyParser {
         if (this.typeInfo.arrayType === null) {
             variable.options.const_ = true
             variable.options.initializer_ = `await parse${this.typeInfo.adapterType}(adapter)`
-            return variable.write(writer)
+            return variable.write(compiler)
         } else {
-            variable.write(writer)
+            variable.write(compiler)
             compiler.withBlock(() => {
                 this.writeArrayParser(this.typeInfo.arrayType)
-                variable.writeAssignment(writer, 'result_0')
+                variable.writeAssignment(compiler, 'result_0')
             })
             // parseArrayStuff
         }
-        return writer
+        return compiler
     }
 }
 
 //#endregion
 
-const genFile2 = (fileName: string, writeFile: (writer: GenWriter) => void) => {
+const genFile2 = (fileName: string, writeFile: (compiler: ITextCompiler) => void) => {
     const path = `./src/messages/${fileName}.generated.ts`
     console.log(`[genFile2] Generating file ${fileName} ...`)
-    const writer = new GenWriter()
-    writeFile(writer)
+    const compiler = new TextCompiler()
+    writeFile(compiler)
     /// FILE
-    const file = `${warning}\n${compilercompile()}\n${warning}`
+    const file = `${warning}\n${compiler.compile()}\n${warning}`
     writeFileSync(path, file)
     console.log(`[genFile2] Generating file ${fileName} complete`)
 }
 
 genFile2(builtinsFileName, genBuiltins2)
 
-genFile2('genTesting', writer => {
-    writeImports(writer)
-    compilerwithRegion('INTERFACES', () => {
+genFile2('genTesting', compiler => {
+    writeImports(compiler)
+    compiler.build(new Region('INTERFACES'), () => {
         for (const format of formats) {
-            const interface = getInterface(format)
-            interface.write(writer)
+            const interface_ = getInterface(format)
+            interface_.write(compiler)
         }
     })
 })
