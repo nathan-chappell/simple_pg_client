@@ -25,3 +25,15 @@ const intGenerator = (() => {
 })()
 
 export const varName = (prefix: string | null = null) => `${prefix ?? '_'}${intGenerator.next().value!}`
+
+// pads all strings on the right to make each "column" the same "width"
+export const getTableAlignments: (table: string[][]) => number[] = (table: string[][]) => {
+    const _padding = 1
+    const sizes = table.map(row => row.map(item => item.length))
+    const maxSizes = sizes.reduce((maxes, row) => maxes.map((_max, j) => Math.max(_max, row[j])))
+    return maxSizes;
+    // return table.reduce((alignedTable, row, i) => {
+    //     alignedTable.push(row.map(item => item.padEnd(maxSizes[i] - item.length + _padding)))
+    //     return alignedTable
+    // }, [] as string[][])
+}

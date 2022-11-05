@@ -1,76 +1,57 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
+import { TableWriter } from '../compilers/TableWriter.ts'
+import { Configurable } from '../Configurable.ts'
 import { Block } from '../structures/Block.ts'
-import { stringToLines } from './utils.ts'
+import { MultiLineComment } from './Comment.ts'
+import { IComponent } from './IComponent.ts'
 
 export interface InterfacePropertyOptions {
     name: string
     type: string
     optional?: boolean
-    comment?: string | string[]
+    comment?: string
 }
 
+export interface InterfaceOptions {
+    commentAfterProp: boolean
+    export_: boolean
+    autoAlign: boolean
+}
 
-export class Interface {
+export class Interface extends Configurable<InterfaceOptions> implements IComponent {
     _lineTargetLength = 100
 
-    constructor(
-        public name: string,
-        public properties: InterfacePropertyOptions[],
-        public options: DeclOptions = {}
-    ) {}
-
-    _writeCommentLines = (compiler: ITextCompiler, alignment: number, comment: string | string[]) => {
-        if (!Array.isArray(comment)) comment = [...stringToLines(comment, this._lineTargetLength)]
-        for (const commentLine of comment) {
-            compiler.align(alignment).writeLine('// ', commentLine)
-        }
-    }
-
-    _analyze() {
-        const maxPropLength = Math.max(...this.properties.map(p => p.name.length))
-        const maxTypeLength = Math.max(...this.properties.map(p => p.type.length))
-        const maxCommentLength = Math.max(
-            ...this.properties
-                .map(p => p.comment ?? '')
-                .filter(c => typeof c === 'string')
-                .map(c => c.length)
-        )
-        const propAlignment = 4
-        const typeAlignment = propAlignment + maxPropLength + 2
-        const commentAlignment = propAlignment + maxPropLength + maxTypeLength + 2
-        const commentBeforeProp =
-            true ||
-            this.properties.some(p => Array.isArray(p.comment)) ||
-            (maxCommentLength > 0 && commentAlignment + maxCommentLength > this._lineTargetLength)
-
-        return {
-            propAlignment,
-            typeAlignment,
-            commentAlignment,
-            commentBeforeProp,
-        }
-    }
-
-    // TODO: Broken!!!
-    write(compiler: ITextCompiler): ITextCompiler {
-        const { propAlignment, typeAlignment, commentAlignment, commentBeforeProp } = this._analyze()
-
-        if (this.options.export_) compiler.write('export ')
-        compiler.write('interface ', this.name, ' ').build(new Block(), () => {
-            for (const property of this.properties) {
-                if (commentBeforeProp && property.comment)
-                    this._writeCommentLines(compiler, propAlignment, property.comment)
-                compiler
-                    .align(propAlignment)
-                    .write(property.name, ':')
-                    .align(typeAlignment)
-                    .write(property.type)
-                if (!commentBeforeProp && typeof property.comment === 'string') {
-                    compiler.align(commentAlignment).write(' // ', property.comment)
-                }
-                compiler.newLine()
-            }
+    constructor(public name: string, public properties: InterfacePropertyOptions[]) {
+        super({
+            commentAfterProp: false,
+            export_: true,
+            autoAlign: true,
         })
-        return compiler.writeLine(' // ', this.name).newLine()
+    }
+
+    write(compiler: ITextCompiler): ITextCompiler {
+        if (!this.options.commentAfterProp) {
+            for (const property of this.properties.filter(p => p.comment)) {
+                compiler.embed(new MultiLineComment(`* @${property.name}: ${property.comment!}`))
+            }
+        }
+
+        const propertyDefTable = new TableWriter(compiler).with({
+            startAlignment: 4,
+            rows: this.properties.map(p =>
+                this.options.commentAfterProp
+                    ? [`${p.name}:`, p.type, p.comment || '']
+                    : [`${p.name}:`, p.type]
+            ),
+        })
+
+        return compiler
+            .writeIf(this.options.export_, 'export ')
+            .write('interface ', this.name, ' ')
+            .build(new Block(), () => {
+                return compiler.embed(propertyDefTable)
+            })
+            .writeLine(' // ', this.name)
+            .newLine()
     }
 }

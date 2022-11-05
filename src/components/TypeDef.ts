@@ -1,9 +1,17 @@
 import { IComponent } from './IComponent.ts'
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { DeclOptions } from './options.ts'
+import { Configurable } from '../Configurable.ts'
 
-export class TypeDef implements IComponent {
-    constructor(public name: string, public def: string, public options: DeclOptions = {}) {}
+export interface TypeDefOptions {
+    export_: boolean
+}
+
+export class TypeDef extends Configurable<TypeDefOptions> implements IComponent {
+    constructor(public name: string, public def: string) {
+        super({
+            export_: true,
+        })
+    }
 
     write(compiler: ITextCompiler): ITextCompiler {
         return compiler
