@@ -5,6 +5,7 @@ import { IComponent } from './IComponent.ts'
 export interface VariableOptions {
     const_: boolean
     initializer_: string | null
+    // TODO: check if alignment still needed
     initAlignment: number | null
     typeAlignment: number | null
 }

@@ -19,8 +19,6 @@ export interface InterfaceOptions {
 }
 
 export class Interface extends Configurable<InterfaceOptions> implements IComponent {
-    _lineTargetLength = 100
-
     constructor(public name: string, public properties: InterfacePropertyOptions[]) {
         super({
             commentAfterProp: false,
