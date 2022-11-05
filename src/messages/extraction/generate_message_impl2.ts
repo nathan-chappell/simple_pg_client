@@ -163,7 +163,7 @@ class GenPropertyParser {
             return variable.write(compiler)
         } else {
             variable.write(compiler)
-            compiler.withBlock(() => {
+            compiler.build(new Block(), () => {
                 this.writeArrayParser(this.typeInfo.arrayType)
                 variable.writeAssignment(compiler, 'result_0')
             })

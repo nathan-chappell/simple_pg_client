@@ -17,6 +17,6 @@ export interface ITextCompiler extends ICompiler {
     writeLine(...content: string[]): ITextCompiler
     writeLineIf(condition: boolean, ...content: string[]): ITextCompiler
 
-    writeComponent(component: IComponent): ITextCompiler
+    embed(component: IComponent): ITextCompiler
     build(structure: IStructure, ...callbacks: CompilerCallback[]): ITextCompiler
 }

@@ -1,5 +1,6 @@
-import { ITextCompiler } from "../compilers/ITextCompiler.ts";
+import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 
-export interface IComponent {
-    write(compiler: ITextCompiler): ITextCompiler;
+export interface IComponent<TOptions = {}> {
+    write(compiler: ITextCompiler): ITextCompiler
+    with(options: Partial<TOptions>): this
 }

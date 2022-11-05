@@ -1,9 +1,23 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
+import { Configurable } from '../Configurable.ts'
 import { IComponent } from './IComponent.ts'
-import { VariableOptions } from './options.ts'
 
-export class Variable implements IComponent {
-    constructor(public name: string, public type: string, public options: VariableOptions = {}) {}
+export interface VariableOptions {
+    const_: boolean
+    initializer_: string | null
+    initAlignment: number | null
+    typeAlignment: number | null
+}
+
+export class Variable extends Configurable<VariableOptions> implements IComponent {
+    constructor(public name: string, public type: string) {
+        super({
+            const_: false,
+            initializer_: null,
+            initAlignment: null,
+            typeAlignment: null,
+        })
+    }
 
     write(compiler: ITextCompiler): ITextCompiler {
         return compiler

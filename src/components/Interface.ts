@@ -1,7 +1,14 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Block } from '../structures/Block.ts'
-import { InterfacePropertyOptions, DeclOptions } from './options.ts'
 import { stringToLines } from './utils.ts'
+
+export interface InterfacePropertyOptions {
+    name: string
+    type: string
+    optional?: boolean
+    comment?: string | string[]
+}
+
 
 export class Interface {
     _lineTargetLength = 100
@@ -44,6 +51,7 @@ export class Interface {
         }
     }
 
+    // TODO: Broken!!!
     write(compiler: ITextCompiler): ITextCompiler {
         const { propAlignment, typeAlignment, commentAlignment, commentBeforeProp } = this._analyze()
 

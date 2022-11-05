@@ -1,25 +1,24 @@
 import { IComponent } from './IComponent.ts'
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { ParamWriteOptions } from './options.ts'
+import { Configurable } from '../Configurable.ts'
 
-export class Parameter implements IComponent {
-    constructor(
-        public name: string,
-        public type: string,
-        public default_: string | null = null,
-        public options: ParamWriteOptions = {}
-    ) {}
+export interface ParameterOptions {
+    withType?: boolean
+    withDefault?: boolean
+}
 
-    write(compiler: ITextCompiler): ITextCompiler {
-        return this.writeWithOptions(compiler, this.options)
+export class Parameter extends Configurable<ParameterOptions> implements IComponent {
+    constructor(public name: string, public type: string, public default_: string | null = null) {
+        super({
+            withDefault: false,
+            withType: false,
+        })
     }
 
-    writeWithOptions(compiler: ITextCompiler, options: ParamWriteOptions): ITextCompiler {
-        compiler.write(`${this.name}`)
-        if (options.withType) compiler.write(`: ${this.type}`)
-        if (options.withDefault && this.default_ !== null) {
-            compiler.write(` = ${this.default_}`)
-        }
+    write(compiler: ITextCompiler): ITextCompiler {
         return compiler
+            .write(`${this.name}`)
+            .writeIf(this.options.withType, `: ${this.type}`)
+            .writeIf(this.options.withDefault && this.default_ !== null, ` = ${this.default_}`)
     }
 }

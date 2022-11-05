@@ -82,7 +82,7 @@ export class TextCompiler implements ITextCompiler {
         return this
     }
 
-    writeComponent(component: IComponent): TextCompiler {
+    embed(component: IComponent): TextCompiler {
         return component.write(this) as TextCompiler
     }
 
