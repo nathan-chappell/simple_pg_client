@@ -3,7 +3,12 @@ import { formats, IMessageField, IMessageFormat } from './formats.ts'
 import { TypeInfo } from './typeInfo.ts'
 import { ITextCompiler } from '../../compilers/ITextCompiler.ts'
 import { Region } from '../../structures/Region.ts'
-import { TextCompiler } from "../../compilers/TextCompiler.ts";
+import { TextCompiler } from '../../compilers/TextCompiler.ts'
+import { Import } from '../../components/Import.ts'
+import { Interface } from '../../components/Interface.ts'
+import { Function_ } from '../../components/Function_.ts'
+import { Parameter } from '../../components/Parameter.ts'
+import { ParameterList } from '../../components/ParameterList.ts'
 
 const validateStartup = () => {
     const cwd = Deno.cwd()
@@ -34,33 +39,17 @@ export const builtinTypes: { [type: string]: TBuiltinTypeInfo } = {
     // Char:   { jsType: 'string',   adapterType: 'Char'   }, // no longer used...
 }
 
-export type ArrayType = { rawType: string; itemType: ArrayType | string; sizeType: 'Int16' | 'Int32' }
-
-export const isArrayRawType = (type: string) => type.match(/\[\w+\]/) !== null
-
-export const _getArrayType: (rawType: string) => ArrayType = rawType => {
-    if (!isArrayRawType(rawType)) throw new Error(`Couldn't get ArrayType from ${rawType}`)
-    const { rest, sizeType } = rawType.match(/^(?<rest>.*)\[(?<sizeType>\w+)\]$/)!.groups!
-    const itemType = isArrayRawType(rest) ? _getArrayType(rest) : rest
-    if (sizeType !== 'Int16' && sizeType !== 'Int32') {
-        throw new Error(`Invalid sizeType: ${sizeType} in ${rawType}`)
-    } else {
-        return { rawType, itemType, sizeType }
-    }
-}
-
 //#endregion
 
 //#region imports
 
-const writeImports = (compiler: ITextCompiler) => {
-    compiler.writeImports(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts')
-    compiler.writeImports(['MessageWriterAdapter'], './messageWriterAdapter.ts')
-    const builtinImports = [
-        ...Object.keys(builtinTypes),
-        ...Object.keys(builtinTypes).map(t => `parse${t}`),
-    ]
-    compiler.writeImports(builtinImports, `./${builtinsFileName}.generated.ts`)
+const imports_ = {
+    DataTypeAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
+    MessageWriterAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
+    builtins: new Import(
+        [...Object.keys(builtinTypes), ...Object.keys(builtinTypes).map(t => `parse${t}`)],
+        `./${builtinsFileName}.generated.ts`
+    ),
 }
 
 //#endregion
@@ -70,13 +59,17 @@ const writeImports = (compiler: ITextCompiler) => {
 // prettier-ignore
 const builtinFunction_ = (name: string) => new Function_(
     `parse${name}`,
-    [new Parameter('adapter', 'DataTypeAdapter')],
-    `Promise<${name}>`,
+    new ParameterList([new Parameter('adapter', 'DataTypeAdapter')]),
+    `Promise<${name}>`
+).with(
     { export_: true, arrow_: true, const_: true, expressionBody_: true, }
 )
 
 const genBuiltins2 = (compiler: ITextCompiler) => {
-    compiler.writeImports(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts').newLine()
+    // TODO: Fix me!
+    // compiler.writeImports(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts').newLine()
+    compiler.embed(imports_.DataTypeAdapter) //(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts').newLine()
+
     const fnDefInfo: [Function_, () => void][] = []
     for (const name of Object.keys(builtinTypes)) {
         const { jsType, adapterType } = builtinTypes[name]
@@ -105,73 +98,12 @@ const getInterface: (format: IMessageFormat) => Interface = format => {
             comment: property.definition,
         })
     }
-    return new Interface(format.title, properties, { export_: true })
+    return new Interface(format.title, properties).with({ export_: true })
 }
 
 //#endregion
 
 //#region Parsers
-
-type ResultName = string
-
-class GenPropertyParser {
-    typeInfo: TypeInfo
-    _typeAlignment = 10
-    _initAlignment = 20
-
-    constructor(public property: IMessageField) {
-        this.typeInfo = new TypeInfo(property.type)
-    }
-
-    // f = async () => {
-    //     let p: 'type[][]';
-    //     {
-    //         let result_0: 'type[]' = [];
-    //         let count = await parseCount(adapter)
-    //         for (let i_0 = 0; i < count; ++i) {
-    //             // ...
-    //             result_0.push(result_1)
-    //         }
-    //         p = result_0
-    //     }
-    // }
-
-    writeArrayParser(type: ArrayType | string, depth = 0): ResultName {
-        const resultName = `result_${depth}`
-        const loopIndexName = `i_${depth}`
-        const sizeName = `size_${depth}`
-
-        const resultVar = new Variable()
-
-        if (typeof type === 'string') {
-            const variable = new Variable()
-        } else {
-            // parse size
-            // recurse
-        }
-    }
-
-    write(compiler: ITextCompiler): ITextCompiler {
-        // if (this.typeInfo.isBuiltin) {
-        const variable = new Variable(this.property.name, this.typeInfo.tsType, {
-            initAlignment: this._initAlignment,
-            typeAlignment: this._typeAlignment,
-        })
-        if (this.typeInfo.arrayType === null) {
-            variable.options.const_ = true
-            variable.options.initializer_ = `await parse${this.typeInfo.adapterType}(adapter)`
-            return variable.write(compiler)
-        } else {
-            variable.write(compiler)
-            compiler.build(new Block(), () => {
-                this.writeArrayParser(this.typeInfo.arrayType)
-                variable.writeAssignment(compiler, 'result_0')
-            })
-            // parseArrayStuff
-        }
-        return compiler
-    }
-}
 
 //#endregion
 
@@ -186,7 +118,7 @@ const genFile2 = (fileName: string, writeFile: (compiler: ITextCompiler) => void
     console.log(`[genFile2] Generating file ${fileName} complete`)
 }
 
-genFile2(builtinsFileName, genBuiltins2)
+// genFile2(builtinsFileName, genBuiltins2)
 
 genFile2('genTesting', compiler => {
     writeImports(compiler)
