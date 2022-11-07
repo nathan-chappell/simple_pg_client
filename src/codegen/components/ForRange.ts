@@ -1,10 +1,10 @@
 import { CompilerCallback, ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { varName } from '../utils.ts'
-import { Variable } from './Variable.ts'
 import { Block } from '../structures/Block.ts'
-import { IComponent } from './IComponent.ts'
 import { IStructure } from '../structures/IStructure.ts'
 import { Configurable } from '../Configurable.ts'
+import { varName } from '../utils.ts'
+import { IComponent } from './IComponent.ts'
+import { Variable } from './Variable.ts'
 
 export class ForRange extends Configurable implements IComponent, IStructure {
     constructor(public max: string | number) {

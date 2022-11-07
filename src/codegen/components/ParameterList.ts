@@ -1,6 +1,6 @@
-import { IComponent } from './IComponent.ts'
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Configurable } from '../Configurable.ts'
+import { IComponent } from './IComponent.ts'
 import { Parameter, ParameterOptions } from './Parameter.ts'
 
 export interface ParameterListOptions {

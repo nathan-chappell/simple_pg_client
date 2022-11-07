@@ -1,7 +1,7 @@
-import { IComponent } from './IComponent.ts'
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Block } from '../structures/Block.ts'
 import { Configurable } from '../Configurable.ts'
+import { IComponent } from './IComponent.ts'
 
 export class Import extends Configurable<Record<never, never>> implements IComponent {
     constructor(public names: string[], public from: string) {

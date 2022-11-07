@@ -1,7 +1,7 @@
-import { IComponent } from '../components/IComponent.ts'
 import { CompilerCallback, ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { Line } from './Line.ts'
+import { IComponent } from '../components/IComponent.ts'
 import { IStructure } from '../structures/IStructure.ts'
+import { Line } from './Line.ts'
 
 export class TextCompiler implements ITextCompiler {
     _lines: Line[] = [new Line()]

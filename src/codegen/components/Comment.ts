@@ -1,9 +1,9 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Configurable } from '../Configurable.ts'
-import { IComponent } from './IComponent.ts'
 import { stringToLines } from '../utils.ts'
+import { IComponent } from './IComponent.ts'
 
-interface CommentOptions {
+export interface CommentOptions {
     lineTargetLength: number
     mark: string
     indent: number

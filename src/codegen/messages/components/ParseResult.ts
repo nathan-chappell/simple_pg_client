@@ -1,9 +1,9 @@
+import { ITextCompiler } from '../../compilers/ITextCompiler.ts'
 import { IComponent } from '../../components/IComponent.ts'
 import { ForRange } from '../../components/ForRange.ts'
-import { ITextCompiler } from '../../compilers/ITextCompiler.ts'
-import { TypeInfo } from './TypeInfo.ts'
-import { varName } from '../../utils.ts'
 import { Variable } from '../../components/Variable.ts'
+import { varName } from '../../utils.ts'
+import { TypeInfo } from './TypeInfo.ts'
 
 export class ParseResult implements IComponent {
     constructor(public result: Variable, public typeInfo: TypeInfo) {}

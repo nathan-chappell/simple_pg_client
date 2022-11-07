@@ -1,4 +1,4 @@
-import { Byte } from '../types.ts'
+import type { Byte } from './types.ts'
 import { readBytesWhile, readNBytes, yieldBytes } from './yieldBytes.ts'
 
 export const stringToBytes = (s: string) => [...[...s].map(c => c.charCodeAt(0)), 0]

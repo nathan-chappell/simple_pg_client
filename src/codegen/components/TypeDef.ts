@@ -1,6 +1,6 @@
-import { IComponent } from './IComponent.ts'
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Configurable } from '../Configurable.ts'
+import { IComponent } from './IComponent.ts'
 
 export interface TypeDefOptions {
     export_: boolean
@@ -14,8 +14,6 @@ export class TypeDef extends Configurable<TypeDefOptions> implements IComponent 
     }
 
     write(compiler: ITextCompiler): ITextCompiler {
-        return compiler
-            .writeIf(this.options.export_, 'export ')
-            .writeLine('type ', this.name, ' = ', this.def)
+        return compiler.writeIf(this.options.export_, 'export ').write('type ', this.name, ' = ', this.def)
     }
 }

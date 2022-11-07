@@ -1,8 +1,8 @@
 import { CompilerCallback, ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { IComponent } from './IComponent.ts'
-import { IStructure } from '../structures/IStructure.ts'
 import { Block } from '../structures/Block.ts'
+import { IStructure } from '../structures/IStructure.ts'
 import { Configurable } from '../Configurable.ts'
+import { IComponent } from './IComponent.ts'
 import { ParameterList } from './ParameterList.ts'
 import { ParameterOptions } from './Parameter.ts'
 

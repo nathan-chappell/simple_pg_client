@@ -1,13 +1,13 @@
-import { Interface, InterfacePropertyOptions } from '../../components/Interface.ts'
-import { Variable } from '../../components/Variable.ts'
+import { Comment } from '../../components/Comment.ts'
 import { Function_ } from '../../components/Function_.ts'
-import { IMessageField, IMessageFormat } from '../extraction/formats.ts'
+import { Interface, InterfacePropertyOptions } from '../../components/Interface.ts'
 import { ParameterList } from '../../components/ParameterList.ts'
 import { Parameter } from '../../components/Parameter.ts'
-import { TypeInfo } from './TypeInfo.ts'
-import { ParseResult } from './ParseResult.ts'
+import { Variable } from '../../components/Variable.ts'
 import { Block } from '../../structures/Block.ts'
-import { Comment } from '../../components/Comment.ts'
+import { IMessageFormat } from '../import/formats.ts'
+import { ParseResult } from './ParseResult.ts'
+import { TypeInfo } from './TypeInfo.ts'
 
 export class Message {
     constructor(public format: IMessageFormat) {}

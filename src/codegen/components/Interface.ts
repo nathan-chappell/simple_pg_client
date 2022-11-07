@@ -1,9 +1,9 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { TableWriter } from '../compilers/TableWriter.ts'
-import { Configurable } from '../Configurable.ts'
+import { AlignedTable } from '../compilers/TableWriter.ts'
 import { Block } from '../structures/Block.ts'
-import { Comment } from './Comment.ts'
+import { Configurable } from '../Configurable.ts'
 import { IComponent } from './IComponent.ts'
+import { Comment } from './Comment.ts'
 
 export interface InterfacePropertyOptions {
     name: string
@@ -37,7 +37,7 @@ export class Interface extends Configurable<InterfaceOptions> implements ICompon
         if (this.options.autoAlign) {
             const widths = [...Array(3)].map((_, i) => Math.max(...rows.map(row => row[i].length)) + 1)
             widths[1] += 4
-            const propertyDefTable = new TableWriter(compiler, widths).with({
+            const propertyDefTable = new AlignedTable(compiler, widths).with({
                 startAlignment: 4,
                 rows: rows,
                 prefixes: ['', '', '// '],

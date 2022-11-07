@@ -1,6 +1,6 @@
-import { ICompiler } from './ICompiler.ts'
 import { IComponent } from '../components/IComponent.ts'
-import { IStructure } from "../structures/IStructure.ts";
+import { IStructure } from '../structures/IStructure.ts'
+import { ICompiler } from './ICompiler.ts'
 
 export type CompilerCallback = (compiler: ITextCompiler) => void
 
