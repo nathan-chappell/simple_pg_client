@@ -25,7 +25,6 @@ export class Message {
             this.format.title,
             this.format.definition.map(p => {
                 const typeInfo = TypeInfo.fromRawType(p.type)
-                console.log(JSON.stringify({ name: `${this.format.title}.${p.name}`, typeInfo }))
                 return {
                     name: p.name,
                     type: typeInfo.tsType,

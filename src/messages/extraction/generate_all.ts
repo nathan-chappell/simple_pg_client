@@ -125,4 +125,4 @@ const genFile2 = (fileName: string, writeFile: (compiler: ITextCompiler) => void
 }
 
 genFile2(builtinsFileName, genBuiltins2)
-genFile2('genTesting', genMessages)
+genFile2('messageFormats', genMessages)

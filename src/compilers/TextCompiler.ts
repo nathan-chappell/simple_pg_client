@@ -21,7 +21,7 @@ export class TextCompiler implements ITextCompiler {
 
     align(column: number): TextCompiler {
         if (this.column > column) {
-            console.warn(`can't align to ${column}: ${JSON.stringify(this._lastLine)}`)
+            console.warn(`can't align to ${column}(${this.column}): ${JSON.stringify(this._lastLine)}`)
         } else {
             this._lastLine.line = this._lastLine.compile()
             this._lastLine.aligned = true

@@ -289,10 +289,10 @@ export function isBindComplete(baseMessage: IBackendMessage): baseMessage is Bin
 // * @pid: The process ID of the target backend.
 // * @key: The secret key for the target backend.
 export interface CancelRequest {
-    length: Int32     //Int32(16)
-    code:   Int32     //Int32(80877102)
-    pid:    Int32     //Int32
-    key:    Int32     //Int32
+    length: Int32     // Int32(16)
+    code:   Int32     // Int32(80877102)
+    pid:    Int32     // Int32
+    key:    Int32     // Int32
 } // CancelRequest
 
 // no parser for CancelRequest - currently only creating parsers for backend messages

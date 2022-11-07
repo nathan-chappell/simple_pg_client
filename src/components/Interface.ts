@@ -32,7 +32,7 @@ export class Interface extends Configurable<InterfaceOptions> implements ICompon
     write(compiler: ITextCompiler): ITextCompiler {
         if (this.options.comment !== null) compiler.embed(this.options.comment)
         let body: () => void
-        const rows = this.properties.map(p => [`${p.name}:`, p.type, `// ${p.lineComment}` ?? ''])
+        const rows = this.properties.map(p => [`${p.name}:`, p.type, p.lineComment ?? ''])
 
         if (this.options.autoAlign) {
             const widths = [...Array(3)].map((_, i) => Math.max(...rows.map(row => row[i].length)) + 1)
@@ -40,6 +40,7 @@ export class Interface extends Configurable<InterfaceOptions> implements ICompon
             const propertyDefTable = new TableWriter(compiler, widths).with({
                 startAlignment: 4,
                 rows: rows,
+                prefixes: ['', '', '// '],
             })
             body = () => compiler.embed(propertyDefTable)
         } else {

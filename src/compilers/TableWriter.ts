@@ -6,6 +6,7 @@ import { stringToLines } from '../utils.ts'
 export interface TableWriterOptions {
     startAlignment: number | null
     rows: string[][]
+    prefixes: string[]
 }
 
 export class TableWriter extends Configurable<TableWriterOptions> implements IComponent {
@@ -13,6 +14,7 @@ export class TableWriter extends Configurable<TableWriterOptions> implements ICo
         super({
             startAlignment: null,
             rows: [],
+            prefixes: [],
         })
     }
 
@@ -26,9 +28,13 @@ export class TableWriter extends Configurable<TableWriterOptions> implements ICo
             const cells = row.map(s => [...stringToLines(s, this.columnWidths[0])])
             const lineCount = Math.max(...cells.map(c => c.length))
             for (let j = 0; j < lineCount; ++j) {
-                for (let c = 0; c < cells.length; ++c) compiler.align(alignments[c]).write(cells[c][j] ?? '')
+                for (let c = 0; c < cells.length; ++c) {
+                    compiler
+                        .align(alignments[c])
+                        .write(`${this.options.prefixes[c] ?? ''}${cells[c][j] ?? ''}`)
+                }
+                compiler.newLine()
             }
-            compiler.newLine()
         }
         return compiler
     }
