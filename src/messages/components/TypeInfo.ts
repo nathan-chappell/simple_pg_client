@@ -7,7 +7,7 @@ export interface TypeInfoOptions {
 }
 
 export class TypeInfo extends Configurable<TypeInfoOptions> {
-    constructor(public rawType: string) {
+    private constructor(public rawType: string) {
         super({
             itemType: '__DEFAULT__',
             sizeTypes: [],

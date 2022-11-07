@@ -2,7 +2,7 @@ import { IComponent } from '../../components/IComponent.ts'
 import { ForRange } from '../../components/ForRange.ts'
 import { ITextCompiler } from '../../compilers/ITextCompiler.ts'
 import { TypeInfo } from './TypeInfo.ts'
-import { varName } from '../../components/utils.ts'
+import { varName } from '../../utils.ts'
 import { Variable } from '../../components/Variable.ts'
 
 export class ParseResult implements IComponent {

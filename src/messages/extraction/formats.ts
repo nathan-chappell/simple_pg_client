@@ -396,12 +396,12 @@ export const formats: IMessageFormat[] = [
         "title": "CancelRequest",
         "definition": [
             {
-                "name": "messageType",
+                "name": "length",
                 "type": "Int32(16)",
                 "definition": "Length of message contents in bytes, including self.",
             },
             {
-                "name": "length",
+                "name": "code",
                 "type": "Int32(80877102)",
                 "definition": "The cancel request code. The value is chosen to contain 1234 in the most significant 16 bits, and 5678 in the least significant 16 bits. (To avoid confusion, this code must not be the same as any protocol version number.)",
             },

@@ -1,17 +1,15 @@
 import { writeFileSync } from 'https://deno.land/std@0.161.0/node/fs.ts'
-import { formats, IMessageField, IMessageFormat } from './formats.ts'
-// import { TypeInfo } from './typeInfo.ts'
+import { formats } from './formats.ts'
 import { ITextCompiler } from '../../compilers/ITextCompiler.ts'
 import { Region } from '../../structures/Region.ts'
 import { TextCompiler } from '../../compilers/TextCompiler.ts'
 import { Import } from '../../components/Import.ts'
-import { Interface } from '../../components/Interface.ts'
 import { Function_ } from '../../components/Function_.ts'
 import { Parameter } from '../../components/Parameter.ts'
 import { ParameterList } from '../../components/ParameterList.ts'
 import { TypeDef } from '../../components/TypeDef.ts'
-import { TypeInfo } from '../components/TypeInfo.ts'
-import { Message } from '../components/message.ts'
+import { Message } from '../components/Message.ts'
+import { Comment } from '../../components/Comment.ts'
 
 const validateStartup = () => {
     const cwd = Deno.cwd()
@@ -61,15 +59,6 @@ const imports_ = {
 
 //#region builtins
 
-// prettier-ignore
-const builtinFunction_ = (name: string) => new Function_(
-    `parse${name}`,
-    new ParameterList([new Parameter('adapter', 'DataTypeAdapter')]),
-    `Promise<${name}>`
-).with(
-    { export_: true, arrow_: true, const_: true, expressionBody_: true, }
-)
-
 const genBuiltins2 = (compiler: ITextCompiler) => {
     compiler.embed(imports_.DataTypeAdapter)
     const typeDefs = Object.entries(builtinTypes).map(([name, { jsType }]) => new TypeDef(name, jsType))
@@ -88,7 +77,7 @@ const genBuiltins2 = (compiler: ITextCompiler) => {
             },
         })
     )
-    for (let p of parsers) if (p.options.body === null) throw new Error(`${p.name} got null body`)
+    for (const p of parsers) if (p.options.body === null) throw new Error(`${p.name} got null body`)
     compiler.newLine()
     compiler.embed(...typeDefs)
     compiler.newLine()
@@ -97,35 +86,27 @@ const genBuiltins2 = (compiler: ITextCompiler) => {
 
 //#endregion
 
-//#region interfaces
+//#region messages
 
-const getInterface: (format: IMessageFormat) => Interface = format => {
-    const properties: InterfacePropertyOptions[] = []
-    for (const property of format.definition) {
-        properties.push({
-            name: property.name,
-            type: new TypeInfo(property.type).tsType,
-            comment: property.definition,
-        })
-    }
-    return new Interface(format.title, properties).with({ export_: true })
-}
-
-//#endregion
-
-//#region Parsers
+const ignoreLintRules = ['no-inferrable-types', 'require-await']
 
 const genMessages = (compiler: ITextCompiler) => {
-    compiler.embed(...Object.values(imports_)).newLine()
+    compiler
+        .embed(new Comment([`deno-lint-ignore-file ${ignoreLintRules.join(' ')}`]))
+        .newLine()
+        .embed(...Object.values(imports_))
+        .newLine()
     for (const message of messages) {
-        // compiler.embed(message.interface, message.parser, message.guard)
         compiler.build(new Region(message.format.title), _compiler => {
-            _compiler
-                // .embed(message.interface)
-                .newLine()
-                .embed(message.parser)
-                .newLine()
-                // .embed(message.guard)
+            const components = [message.interface, message.parser, message.guard]
+            for (const component of components) {
+                if (typeof component === 'string') {
+                    _compiler.embed(new Comment([component]).with({ lineTargetLength: 120 }))
+                } else {
+                    _compiler.embed(component).newLine()
+                }
+                _compiler.newLine()
+            }
         })
     }
 }
@@ -133,16 +114,15 @@ const genMessages = (compiler: ITextCompiler) => {
 //#endregion
 
 const genFile2 = (fileName: string, writeFile: (compiler: ITextCompiler) => void) => {
-    const path = `./src/messages/${fileName}.generated.ts`
+    const outputPath = `./src/messages/${fileName}.generated.ts`
     console.log(`[genFile2] Generating file ${fileName} ...`)
     const compiler = new TextCompiler()
     writeFile(compiler)
     /// FILE
     const file = `${warning}\n${compiler.compile()}\n${warning}`
-    writeFileSync(path, file)
+    writeFileSync(outputPath, file)
     console.log(`[genFile2] Generating file ${fileName} complete`)
 }
 
 genFile2(builtinsFileName, genBuiltins2)
-
 genFile2('genTesting', genMessages)

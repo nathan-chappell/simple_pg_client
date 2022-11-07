@@ -1,35 +1,32 @@
 import { IComponent } from '../components/IComponent.ts'
 import { Configurable } from '../Configurable.ts'
 import { ITextCompiler } from './ITextCompiler.ts'
+import { stringToLines } from '../utils.ts'
 
 export interface TableWriterOptions {
-    startAlignment: number
-    alignments: number[] | null
+    startAlignment: number | null
     rows: string[][]
 }
 
 export class TableWriter extends Configurable<TableWriterOptions> implements IComponent {
-    constructor(public compiler: ITextCompiler) {
+    constructor(public compiler: ITextCompiler, public columnWidths: number[]) {
         super({
-            startAlignment: 0,
-            alignments: null,
+            startAlignment: null,
             rows: [],
         })
     }
 
-    _getAlignments(): number[] {
-        const _padding = 1
-        const sizes = this.options.rows.map(row => row.map(item => item.length))
-        const maxSizes = sizes.reduce((maxes, row) => maxes.map((_max, j) => Math.max(_max, row[j])))
-        return maxSizes
-    }
-
     write(compiler: ITextCompiler): ITextCompiler {
-        const _alignments = this.options.alignments ?? this._getAlignments()
+        const alignments = this.columnWidths.reduce(
+            (acc, w) => (acc.push(w + acc[acc.length - 1] ?? 0), acc),
+            [this.options.startAlignment ?? 0]
+        )
         for (const row of this.options.rows) {
-            compiler.align(this.options.startAlignment)
-            for (let j = 0; j < row.length; ++j) {
-                compiler.align(_alignments[j]).write(row[j])
+            // compiler.alignIf(this.options.startAlignment)
+            const cells = row.map(s => [...stringToLines(s, this.columnWidths[0])])
+            const lineCount = Math.max(...cells.map(c => c.length))
+            for (let j = 0; j < lineCount; ++j) {
+                for (let c = 0; c < cells.length; ++c) compiler.align(alignments[c]).write(cells[c][j] ?? '')
             }
             compiler.newLine()
         }

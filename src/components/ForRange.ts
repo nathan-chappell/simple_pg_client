@@ -1,5 +1,5 @@
 import { CompilerCallback, ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { varName } from './utils.ts'
+import { varName } from '../utils.ts'
 import { Variable } from './Variable.ts'
 import { Block } from '../structures/Block.ts'
 import { IComponent } from './IComponent.ts'
