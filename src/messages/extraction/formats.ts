@@ -433,7 +433,8 @@ export const formats: IMessageFormat[] = [
             },
             {
                 "name": "qType",
-                "type": "'S' | 'P'",
+                // "type": "'S' | 'P'",
+                "type": "Byte1",
                 "definition": "'S' to close a prepared statement; or 'P' to close a portal.",
             },
             {
@@ -1106,7 +1107,8 @@ export const formats: IMessageFormat[] = [
             },
             {
                 "name": "status",
-                "type": "'I' | 'T' | 'E'",
+                // "type": "'I' | 'T' | 'E'",
+                "type": "Byte1",
                 "definition": "Current backend transaction status indicator. Possible values are 'I' if idle (not in a transaction block); 'T' if in a transaction block; or 'E' if in a failed transaction block (queries will be rejected until block is ended).",
             },
         ],

@@ -5,7 +5,7 @@ export class Configurable<TOptions = Record<never, never>> {
     }
 
     with(options: Partial<TOptions>): this {
-        const _options: TOptions = { ...this.options, options }
+        const _options: TOptions = { ...this.options, ...options }
         return new Proxy(this, {
             get(target, p, receiver) {
                 if (p === 'options') {

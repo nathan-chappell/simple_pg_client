@@ -51,7 +51,7 @@ export class TextCompiler implements ITextCompiler {
 
     withIndent(n: number, ...callbacks: CompilerCallback[]): TextCompiler {
         this.indent(n)
-        for (const callback of callbacks) callback()
+        for (const callback of callbacks) callback(this)
         this.dedent(n)
         return this
     }
@@ -82,8 +82,14 @@ export class TextCompiler implements ITextCompiler {
         return this
     }
 
-    embed(component: IComponent): TextCompiler {
-        return component.write(this) as TextCompiler
+    call_(...callbacks: CompilerCallback[]) {
+        for (const callback of callbacks) callback(this)
+        return this
+    }
+
+    embed(...components: IComponent[]): TextCompiler {
+        for (const component of components) component.write(this).writeLineIf(components.length > 1)
+        return this
     }
 
     build(structure: IStructure, ...callbacks: CompilerCallback[]): TextCompiler {

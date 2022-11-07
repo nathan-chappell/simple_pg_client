@@ -16,7 +16,7 @@ export class ForRange extends Configurable implements IComponent, IStructure {
     }
 
     write(compiler: ITextCompiler): ITextCompiler {
-        const loopVar = new Variable(varName(), 'number').with({ initializer_: '0' })
+        const loopVar = new Variable(varName(), 'number').with({ value: '0' })
         return compiler
             .write('for (')
             .embed(loopVar)

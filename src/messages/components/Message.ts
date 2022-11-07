@@ -25,18 +25,22 @@ export class Message {
             new ParameterList([new Parameter('adapter', 'DataTypeAdapter')]),
             this.format.title
         ).with({
+            async_: true,
+            arrow_: true,
+            const_: true,
+            export_: true,
             body: compiler => {
                 for (const field of this.format.definition) {
                     const typeInfo = TypeInfo.fromRawType(field.type)
                     // prettier-ignore
                     const variable = new Variable(field.name, typeInfo.tsType).with({ decl: 'const' })
-                    compiler.embed(new ParseResult(variable, typeInfo)).newLine()
+                    compiler.embed(new ParseResult(variable, typeInfo))
                 }
                 return compiler.write('return ').build(new Block(), () => {
                     for (const field of this.format.definition) {
                         compiler.writeLine(field.name, ',')
                     }
-                })
+                }).writeLine(' // ', this.format.title)
             },
         })
     }

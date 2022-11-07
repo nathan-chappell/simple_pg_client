@@ -2,7 +2,7 @@ import { ICompiler } from './ICompiler.ts'
 import { IComponent } from '../components/IComponent.ts'
 import { IStructure } from "../structures/IStructure.ts";
 
-export type CompilerCallback = () => void
+export type CompilerCallback = (compiler: ITextCompiler) => void
 
 export interface ITextCompiler extends ICompiler {
     align(column: number): ITextCompiler
@@ -17,6 +17,7 @@ export interface ITextCompiler extends ICompiler {
     writeLine(...content: string[]): ITextCompiler
     writeLineIf(condition: boolean, ...content: string[]): ITextCompiler
 
-    embed(component: IComponent): ITextCompiler
+    call_(...callbacks: CompilerCallback[]): ITextCompiler
+    embed(...components: IComponent[]): ITextCompiler
     build(structure: IStructure, ...callbacks: CompilerCallback[]): ITextCompiler
 }

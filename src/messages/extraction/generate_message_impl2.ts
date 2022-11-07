@@ -1,6 +1,6 @@
 import { writeFileSync } from 'https://deno.land/std@0.161.0/node/fs.ts'
 import { formats, IMessageField, IMessageFormat } from './formats.ts'
-import { TypeInfo } from './typeInfo.ts'
+// import { TypeInfo } from './typeInfo.ts'
 import { ITextCompiler } from '../../compilers/ITextCompiler.ts'
 import { Region } from '../../structures/Region.ts'
 import { TextCompiler } from '../../compilers/TextCompiler.ts'
@@ -9,6 +9,9 @@ import { Interface } from '../../components/Interface.ts'
 import { Function_ } from '../../components/Function_.ts'
 import { Parameter } from '../../components/Parameter.ts'
 import { ParameterList } from '../../components/ParameterList.ts'
+import { TypeDef } from '../../components/TypeDef.ts'
+import { TypeInfo } from '../components/TypeInfo.ts'
+import { Message } from '../components/message.ts'
 
 const validateStartup = () => {
     const cwd = Deno.cwd()
@@ -39,13 +42,15 @@ export const builtinTypes: { [type: string]: TBuiltinTypeInfo } = {
     // Char:   { jsType: 'string',   adapterType: 'Char'   }, // no longer used...
 }
 
+const messages = formats.map(f => new Message(f))
+
 //#endregion
 
 //#region imports
 
 const imports_ = {
     DataTypeAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
-    MessageWriterAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
+    // MessageWriterAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
     builtins: new Import(
         [...Object.keys(builtinTypes), ...Object.keys(builtinTypes).map(t => `parse${t}`)],
         `./${builtinsFileName}.generated.ts`
@@ -66,23 +71,28 @@ const builtinFunction_ = (name: string) => new Function_(
 )
 
 const genBuiltins2 = (compiler: ITextCompiler) => {
-    // TODO: Fix me!
-    // compiler.writeImports(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts').newLine()
-    compiler.embed(imports_.DataTypeAdapter) //(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts').newLine()
-
-    const fnDefInfo: [Function_, () => void][] = []
-    for (const name of Object.keys(builtinTypes)) {
-        const { jsType, adapterType } = builtinTypes[name]
-        compiler.writeType(name, jsType, { export_: true })
-        // prettier-ignore
-        fnDefInfo.push([
-            builtinFunction_(name),
-            () => { compiler.writeLine(`adapter.read${adapterType}()`) }
-        ])
-    }
+    compiler.embed(imports_.DataTypeAdapter)
+    const typeDefs = Object.entries(builtinTypes).map(([name, { jsType }]) => new TypeDef(name, jsType))
+    const parsers = Object.entries(builtinTypes).map(([name, { adapterType }]) =>
+        new Function_(
+            `parse${name}`,
+            new ParameterList([new Parameter('adapter', 'DataTypeAdapter')]),
+            `Promise<${name}>`
+        ).with({
+            arrow_: true,
+            export_: true,
+            const_: true,
+            expressionBody_: true,
+            body: _compiler => {
+                _compiler.writeLine(`adapter.read${adapterType}()`)
+            },
+        })
+    )
+    for (let p of parsers) if (p.options.body === null) throw new Error(`${p.name} got null body`)
     compiler.newLine()
-    for (const info of fnDefInfo) compiler.writeFunction_(...info)
+    compiler.embed(...typeDefs)
     compiler.newLine()
+    compiler.embed(...parsers)
 }
 
 //#endregion
@@ -105,6 +115,21 @@ const getInterface: (format: IMessageFormat) => Interface = format => {
 
 //#region Parsers
 
+const genMessages = (compiler: ITextCompiler) => {
+    compiler.embed(...Object.values(imports_)).newLine()
+    for (const message of messages) {
+        // compiler.embed(message.interface, message.parser, message.guard)
+        compiler.build(new Region(message.format.title), _compiler => {
+            _compiler
+                // .embed(message.interface)
+                .newLine()
+                .embed(message.parser)
+                .newLine()
+                // .embed(message.guard)
+        })
+    }
+}
+
 //#endregion
 
 const genFile2 = (fileName: string, writeFile: (compiler: ITextCompiler) => void) => {
@@ -118,14 +143,6 @@ const genFile2 = (fileName: string, writeFile: (compiler: ITextCompiler) => void
     console.log(`[genFile2] Generating file ${fileName} complete`)
 }
 
-// genFile2(builtinsFileName, genBuiltins2)
+genFile2(builtinsFileName, genBuiltins2)
 
-genFile2('genTesting', compiler => {
-    writeImports(compiler)
-    compiler.build(new Region('INTERFACES'), () => {
-        for (const format of formats) {
-            const interface_ = getInterface(format)
-            interface_.write(compiler)
-        }
-    })
-})
+genFile2('genTesting', genMessages)

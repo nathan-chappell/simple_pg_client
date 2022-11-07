@@ -61,15 +61,15 @@ export class Function_
     }
 
     build(compiler: ITextCompiler, ...callbacks: CompilerCallback[]): ITextCompiler {
-        this.write(compiler)
+        console.debug(`building ${this.name}`)
         compiler.embed(this).write(' ')
         if (this.options.arrow_) {
             compiler
                 .write('= ')
                 .writeIf(!!this.options.async_, 'async ')
-                .write('(')
                 .embed(this._params({ withType: false, withDefault: true }))
-                .write(') => ')
+                .write(' => ')
+            if (this.options.expressionBody_) return compiler.call_(...callbacks)
         }
         return compiler.build(new Block(), ...callbacks)
     }
