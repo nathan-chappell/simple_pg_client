@@ -5,24 +5,26 @@ import { Configurable } from '../Configurable.ts'
 import { IComponent } from './IComponent.ts'
 import { ParameterList } from './ParameterList.ts'
 import { ParameterOptions } from './Parameter.ts'
+import { MultiCallback } from './MultiCallback.ts'
+import { OptionsWithBody, StructureWithBody } from '../structures/StructureWithBody.ts'
 
-export interface FunctionOptions {
+export interface FunctionOptions extends OptionsWithBody {
     arrow_: boolean
     async_: boolean
     const_: boolean
     export_: boolean
     expressionBody_: boolean
-    body: ((compiler: ITextCompiler) => void) | null
 }
 
 export class Function_
-    extends Configurable<FunctionOptions>
+    // extends Configurable<FunctionOptions>
+    extends StructureWithBody<FunctionOptions>
     implements IComponent<FunctionOptions>, IStructure
 {
     constructor(
         public name: string,
         public parameterList: ParameterList,
-        public returnType: string | null = null
+        public returnType: string | null = null,
     ) {
         super({
             arrow_: false,
@@ -47,14 +49,14 @@ export class Function_
             if (this.returnType !== null) {
                 compiler
                     .write(': ')
-                    .embed(this._params({ withType: true, withDefault: false }))
+                    .embed(this._params({ withType: true, withDefault: false, hyphenPrefix: false }))
                     .write(' => ', this.returnType)
             }
         } else {
             compiler
                 .writeIf(!!this.options.async_, 'async ')
                 .write('function ', this.name)
-                .embed(this._params({ withType: true, withDefault: true }))
+                .embed(this._params({ withType: true, withDefault: true, hyphenPrefix: false }))
                 .writeIf(this.returnType !== null, ': ', this.returnType!)
         }
         return compiler
@@ -62,15 +64,16 @@ export class Function_
 
     build(compiler: ITextCompiler, ...callbacks: CompilerCallback[]): ITextCompiler {
         console.debug(`building ${this.name}`)
+        const body = new MultiCallback(...callbacks)
         compiler.embed(this).write(' ')
         if (this.options.arrow_) {
             compiler
                 .write('= ')
                 .writeIf(!!this.options.async_, 'async ')
-                .embed(this._params({ withType: false, withDefault: true }))
+                .embed(this._params({ withType: false, withDefault: true, hyphenPrefix: false }))
                 .write(' => ')
-            if (this.options.expressionBody_) return compiler.call_(...callbacks)
+            if (this.options.expressionBody_) return compiler.embed(body)
         }
-        return compiler.build(new Block(), ...callbacks)
+        return compiler.build(new Block().with({ body }))
     }
 }

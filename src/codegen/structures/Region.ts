@@ -1,15 +1,20 @@
-import { CompilerCallback, ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { IStructure } from './IStructure.ts'
+import { ITextCompiler } from '../compilers/ITextCompiler.ts'
+import { StructureWithBody } from './StructureWithBody.ts'
 
-export class Region implements IStructure {
-    constructor(public name: string) {}
+export class Region extends StructureWithBody {
+    constructor(public name: string) {
+        super({
+            body: null,
+        })
+    }
 
-    build(compiler: ITextCompiler, ...callbacks: CompilerCallback[]): ITextCompiler {
+    write(compiler: ITextCompiler): ITextCompiler {
+        this._checkBody()
         return compiler
             .newLine()
             .writeLine('//#region ', this.name)
             .newLine()
-            .withIndent(0, ...callbacks)
+            .embed(this.options.body!)
             .newLine()
             .writeLine('//#endregion')
     }

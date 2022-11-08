@@ -9,7 +9,7 @@ export interface ITextCompiler extends ICompiler {
     alignIf(column: unknown): ITextCompiler
     indent(n: number): ITextCompiler
     dedent(n: number): ITextCompiler
-    withIndent(n: number, ...callbacks: CompilerCallback[]): ITextCompiler
+    withIndent(n: number, component: IComponent): ITextCompiler
 
     newLine(n?: number): ITextCompiler
     write(...content: string[]): ITextCompiler
@@ -17,7 +17,6 @@ export interface ITextCompiler extends ICompiler {
     writeLine(...content: string[]): ITextCompiler
     writeLineIf(condition: boolean, ...content: string[]): ITextCompiler
 
-    call_(...callbacks: CompilerCallback[]): ITextCompiler
     embed(...components: IComponent[]): ITextCompiler
     build(structure: IStructure, ...callbacks: CompilerCallback[]): ITextCompiler
 }
