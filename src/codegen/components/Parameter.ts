@@ -3,8 +3,9 @@ import { Configurable } from '../Configurable.ts'
 import { IComponent } from './IComponent.ts'
 
 export interface ParameterOptions {
-    withType?: boolean
-    withDefault?: boolean
+    withType: boolean
+    withDefault: boolean
+    hyphenPrefix: boolean
 }
 
 export class Parameter extends Configurable<ParameterOptions> implements IComponent {
@@ -12,11 +13,13 @@ export class Parameter extends Configurable<ParameterOptions> implements ICompon
         super({
             withDefault: false,
             withType: false,
+            hyphenPrefix: false,
         })
     }
 
     write(compiler: ITextCompiler): ITextCompiler {
         return compiler
+            .writeIf(this.options.hyphenPrefix, '_')
             .write(`${this.name}`)
             .writeIf(this.options.withType, `: ${this.type}`)
             .writeIf(this.options.withDefault && this.default_ !== null, ` = ${this.default_}`)

@@ -7,6 +7,10 @@ import { Variable } from '../../components/Variable.ts'
 import { Block } from '../../structures/Block.ts'
 import { MessageInfo } from './MessageInfo.ts'
 import { ParseResult } from './ParseResult.ts'
+import { adapterParameter, baseMessageParameter, parserName } from './common.ts'
+import { If_ } from '../../structures/If_.ts'
+import { TypeInfo } from './TypeInfo.ts'
+import { IComponent } from '../../components/IComponent.ts'
 
 export class Message {
     constructor(public info: MessageInfo) {}
@@ -42,7 +46,7 @@ export class Message {
             // prettier-ignore
             return new Function_(
                 `is${this.info.name}`,
-                new ParameterList([new Parameter('baseMessage', 'IBackendMessage')]),
+                new ParameterList([baseMessageParameter]),
                 `baseMessage is ${this.info.name}`
             ).with({
                 arrow_: false,
@@ -57,18 +61,28 @@ export class Message {
     get parser(): Function_ | string {
         if (!this.info.isBackend) {
             return `no parser for ${this.info.name} - currently only creating parsers for backend messages`
-        } else if (this.info.isAuthentication) {
-            return `no parser for ${this.info.name} - authentication is handled separately`
+            // } else if (this.info.isAuthentication) {
+            //     return `no parser for ${this.info.name} - authentication is handled separately`
+        } else if (
+            !this.info.isAuthentication &&
+            this.info.properties.some(property => property.typeInfo.options.optional)
+        ) {
+            throw new Error('Optional type parsing is not implemented except for the Authentication Message')
         } else {
-            const parameterList = new ParameterList([new Parameter('adapter', 'DataTypeAdapter')])
-            let fields = this.info.properties
+            const parameterList = new ParameterList([adapterParameter])
+            let properties = this.info.properties.filter(property => !property.typeInfo.options.optional)
+
             if (this.info.extendsIBackendMessage) {
-                parameterList.parameters.push(new Parameter('baseMessage', 'IBackendMessage'))
-                fields = fields.slice(2)
+                console.log(` * ${this.info.name} extendsIBackendMessage`)
+                parameterList.parameters.push(baseMessageParameter)
+                properties = properties.slice(2)
             }
-            const noAdditionalFields = fields.length === 0
-            if (noAdditionalFields) parameterList.parameters[0].name = `_${parameterList.parameters[0].name}`
-            return new Function_(`parse${this.info.name}`, parameterList, `Promise<${this.info.name}>`).with({
+
+            const noAdditionalFields = properties.length === 0
+            if (noAdditionalFields)
+                parameterList.parameters[0] = parameterList.parameters[0].with({ hyphenPrefix: true })
+
+            return new Function_(parserName(this.info), parameterList, `Promise<${this.info.name}>`).with({
                 async_: true,
                 arrow_: true,
                 const_: true,
@@ -78,21 +92,47 @@ export class Message {
                     if (noAdditionalFields) {
                         compiler.write('baseMessage')
                     } else {
-                        for (const field of fields) {
+                        for (const property of properties) {
                             // prettier-ignore
-                            const variable = new Variable(field.name, field.typeInfo.tsType).with({ decl: 'const' })
-                            compiler.embed(new ParseResult(variable, field.typeInfo))
+                            const variable = new Variable(property.name, property.typeInfo.tsType).with({ decl: 'const' })
+                            compiler.embed(new ParseResult(variable, property.typeInfo))
                         }
+
+                        if (this.info.isAuthentication)
+                            compiler.embed(...this.authenticationParserContinuation)
+
                         return compiler
                             .write('return ')
                             .build(new Block(), () => {
                                 if (this.info.extendsIBackendMessage) compiler.writeLine('...baseMessage,')
-                                for (const field of fields) compiler.writeLine(field.name, ',')
+                                for (const property of properties) compiler.writeLine(property.name, ',')
+                                if (this.info.isAuthentication) compiler.writeLine('salt', ',')
                             })
                             .newLine()
                     }
                 },
             })
         }
+    }
+
+    get authenticationParserContinuation(): IComponent[] {
+        const saltVariable = new Variable('salt', 'Byte4 | null').with({
+            decl: 'let',
+            value: 'null',
+        })
+        const shouldParseSaltVariable = new Variable('shouldParseSalt', 'boolean').with({
+            value: 'code === 5',
+            decl: 'const',
+        })
+        return [
+            saltVariable,
+            shouldParseSaltVariable,
+            new If_(shouldParseSaltVariable).with({
+                body: _compiler =>
+                    _compiler.embed(
+                        new ParseResult(saltVariable.with({ decl: null }), TypeInfo.fromRawType('Byte4'))
+                    ),
+            }),
+        ]
     }
 }

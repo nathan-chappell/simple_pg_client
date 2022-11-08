@@ -21,18 +21,34 @@ export class MessageInfo {
     }
 
     get isAuthentication() {
-        return this.format.title === 'IAuthenticationMessage'
+        return this.name === 'IAuthenticationMessage'
     }
 
     get isBackend() {
-        return !this.format.backend
+        return !!this.format.backend
+    }
+
+    get isBackendBase() {
+        return this.name === 'IBackendMessage'
+    }
+
+    get isInternal() {
+        return !!this.format.internal
+    }
+
+    get isSSL() {
+        return this.name.match(/SSL/) !== null
+    }
+
+    get isStartup() {
+        return this.name.match(/StartupMessage/) !== null
     }
 
     get extendsAuthentication() {
-        return !this.format.internal && this.format.title.match(/Authentication/) !== null
+        return !this.isBackendBase && !this.isAuthentication && this.name.match(/Authentication/) !== null
     }
 
     get extendsIBackendMessage() {
-        return !this.format.internal && this.format.backend
+        return this.isAuthentication || (!this.isBackendBase && !this.isInternal && this.isBackend)
     }
 }

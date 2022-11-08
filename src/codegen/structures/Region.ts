@@ -10,6 +10,7 @@ export class Region implements IStructure {
             .writeLine('//#region ', this.name)
             .newLine()
             .withIndent(0, ...callbacks)
+            .newLine()
             .writeLine('//#endregion')
     }
 }

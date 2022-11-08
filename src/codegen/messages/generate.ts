@@ -7,7 +7,10 @@ import { Parameter } from '../components/Parameter.ts'
 import { ParameterList } from '../components/ParameterList.ts'
 import { TypeDef } from '../components/TypeDef.ts'
 import { Region } from '../structures/Region.ts'
+import { BackendParser } from './components/BackendParser.ts'
+import { adapterParameter } from './components/common.ts'
 import { Message } from './components/Message.ts'
+import { MessageInfo } from './components/MessageInfo.ts'
 import { formats } from './import/formats.ts'
 
 const validateStartup = () => {
@@ -40,7 +43,8 @@ export const builtinTypes: { [type: string]: TBuiltinTypeInfo } = {
     // Char:   { jsType: 'string',   adapterType: 'Char'   }, // no longer used...
 }
 
-const messages = formats.map(f => new Message(f))
+const messageInfos = formats.map(format => new MessageInfo(format))
+const messages = messageInfos.map(info => new Message(info))
 
 //#endregion
 
@@ -63,11 +67,7 @@ const genBuiltins2 = (compiler: ITextCompiler) => {
     compiler.embed(imports_.DataTypeAdapter)
     const typeDefs = Object.entries(builtinTypes).map(([name, { jsType }]) => new TypeDef(name, jsType))
     const parsers = Object.entries(builtinTypes).map(([name, { adapterType }]) =>
-        new Function_(
-            `parse${name}`,
-            new ParameterList([new Parameter('adapter', 'DataTypeAdapter')]),
-            `Promise<${name}>`
-        ).with({
+        new Function_(`parse${name}`, new ParameterList([adapterParameter]), `Promise<${name}>`).with({
             arrow_: true,
             export_: true,
             const_: true,
@@ -96,8 +96,8 @@ const genMessages = (compiler: ITextCompiler) => {
         .newLine()
         .embed(...Object.values(imports_))
         .newLine()
-    for (const message of messages) {
-        compiler.build(new Region(message.format.title), _compiler => {
+    for (const message of messages.filter(message => !message.info.extendsAuthentication)) {
+        compiler.build(new Region(message.info.name), _compiler => {
             const components = [message.interface, message.parser, message.guard]
             for (const component of components) {
                 if (typeof component === 'string') {
@@ -109,6 +109,7 @@ const genMessages = (compiler: ITextCompiler) => {
             }
         })
     }
+    compiler.build(new Region('BackendParser'), new BackendParser(messageInfos).compilerCallback)
 }
 
 //#endregion

@@ -42,6 +42,7 @@ export const parseIBackendMessage: (adapter: DataTypeAdapter) => Promise<IBacken
 
 // No type guard: no expected messageType
 
+
 //#endregion
 
 //#region IAuthenticationMessage
@@ -58,105 +59,13 @@ export interface IAuthenticationMessage {
                  null             // 
 } // IAuthenticationMessage
 
-// no parser for IAuthenticationMessage - authentication is handled separately
-
-export function isIAuthenticationMessage(baseMessage: IBackendMessage): baseMessage is IAuthenticationMessage {
-    return baseMessage.messageType === 'R'
-}
-
-//#endregion
-
-//#region AuthenticationOk
-
-// * @messageType: Identifies the message as an authentication request.
-// * @length: Length of message contents in bytes, including self.
-// * @code: Specifies that the authentication was successful.
-export interface AuthenticationOk {
-    messageType: Byte1     // Byte1('R')
-    length:      Int32     // Int32(8)
-    code:        Int32     // Int32(0)
-} // AuthenticationOk
-
-export const parseAuthenticationOk: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationOk> = async (adapter, baseMessage) => {
+export const parseAuthentication: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<IAuthenticationMessage> = async (adapter, baseMessage) => {
     const code: Int32 = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        code,
+    let salt: Byte4 | null = null
+    const shouldParseSalt: boolean = code === 5
+    if (shouldParseSalt) {
+        salt = await parseByte4(adapter)
     }
-}
-
-export function isAuthenticationOk(baseMessage: IBackendMessage): baseMessage is AuthenticationOk {
-    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 0
-}
-
-//#endregion
-
-//#region AuthenticationKerberosV5
-
-// * @messageType: Identifies the message as an authentication request.
-// * @length: Length of message contents in bytes, including self.
-// * @code: Specifies that Kerberos V5 authentication is required.
-export interface AuthenticationKerberosV5 {
-    messageType: Byte1     // Byte1('R')
-    length:      Int32     // Int32(8)
-    code:        Int32     // Int32(2)
-} // AuthenticationKerberosV5
-
-export const parseAuthenticationKerberosV5: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationKerberosV5> = async (adapter, baseMessage) => {
-    const code: Int32 = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        code,
-    }
-}
-
-export function isAuthenticationKerberosV5(baseMessage: IBackendMessage): baseMessage is AuthenticationKerberosV5 {
-    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 2
-}
-
-//#endregion
-
-//#region AuthenticationCleartextPassword
-
-// * @messageType: Identifies the message as an authentication request.
-// * @length: Length of message contents in bytes, including self.
-// * @code: Specifies that a clear-text password is required.
-export interface AuthenticationCleartextPassword {
-    messageType: Byte1     // Byte1('R')
-    length:      Int32     // Int32(8)
-    code:        Int32     // Int32(3)
-} // AuthenticationCleartextPassword
-
-export const parseAuthenticationCleartextPassword: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationCleartextPassword> = async (adapter, baseMessage) => {
-    const code: Int32 = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        code,
-    }
-}
-
-export function isAuthenticationCleartextPassword(baseMessage: IBackendMessage): baseMessage is AuthenticationCleartextPassword {
-    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 3
-}
-
-//#endregion
-
-//#region AuthenticationMD5Password
-
-// * @messageType: Identifies the message as an authentication request.
-// * @length: Length of message contents in bytes, including self.
-// * @code: Specifies that an MD5-encrypted password is required.
-// * @salt: The salt to use when encrypting the password.
-export interface AuthenticationMD5Password {
-    messageType: Byte1     // Byte1('R')
-    length:      Int32     // Int32(12)
-    code:        Int32     // Int32(5)
-    salt:        Byte4     // Byte4
-} // AuthenticationMD5Password
-
-export const parseAuthenticationMD5Password: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationMD5Password> = async (adapter, baseMessage) => {
-    const code: Int32 = await parseInt32(adapter)
-    const salt: Byte4 = await parseByte4(adapter)
     return {
         ...baseMessage,
         code,
@@ -164,109 +73,10 @@ export const parseAuthenticationMD5Password: (adapter: DataTypeAdapter, baseMess
     }
 }
 
-export function isAuthenticationMD5Password(baseMessage: IBackendMessage): baseMessage is AuthenticationMD5Password {
-    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 5
+export function isIAuthenticationMessage(baseMessage: IBackendMessage): baseMessage is IAuthenticationMessage {
+    return baseMessage.messageType === 'R'
 }
 
-//#endregion
-
-//#region AuthenticationSCMCredential
-
-// * @messageType: Identifies the message as an authentication request.
-// * @length: Length of message contents in bytes, including self.
-// * @code: Specifies that an SCM credentials message is required.
-export interface AuthenticationSCMCredential {
-    messageType: Byte1     // Byte1('R')
-    length:      Int32     // Int32(8)
-    code:        Int32     // Int32(6)
-} // AuthenticationSCMCredential
-
-export const parseAuthenticationSCMCredential: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationSCMCredential> = async (adapter, baseMessage) => {
-    const code: Int32 = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        code,
-    }
-}
-
-export function isAuthenticationSCMCredential(baseMessage: IBackendMessage): baseMessage is AuthenticationSCMCredential {
-    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 6
-}
-
-//#endregion
-
-//#region AuthenticationGSS
-
-// * @messageType: Identifies the message as an authentication request.
-// * @length: Length of message contents in bytes, including self.
-// * @code: Specifies that GSSAPI authentication is required.
-export interface AuthenticationGSS {
-    messageType: Byte1     // Byte1('R')
-    length:      Int32     // Int32(8)
-    code:        Int32     // Int32(7)
-} // AuthenticationGSS
-
-export const parseAuthenticationGSS: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationGSS> = async (adapter, baseMessage) => {
-    const code: Int32 = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        code,
-    }
-}
-
-export function isAuthenticationGSS(baseMessage: IBackendMessage): baseMessage is AuthenticationGSS {
-    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 7
-}
-
-//#endregion
-
-//#region AuthenticationSSPI
-
-// * @messageType: Identifies the message as an authentication request.
-// * @length: Length of message contents in bytes, including self.
-// * @code: Specifies that SSPI authentication is required.
-export interface AuthenticationSSPI {
-    messageType: Byte1     // Byte1('R')
-    length:      Int32     // Int32(8)
-    code:        Int32     // Int32(9)
-} // AuthenticationSSPI
-
-export const parseAuthenticationSSPI: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationSSPI> = async (adapter, baseMessage) => {
-    const code: Int32 = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        code,
-    }
-}
-
-export function isAuthenticationSSPI(baseMessage: IBackendMessage): baseMessage is AuthenticationSSPI {
-    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 9
-}
-
-//#endregion
-
-//#region AuthenticationSASL
-
-// * @messageType: Identifies the message as an authentication request.
-// * @length: Length of message contents in bytes, including self.
-// * @code: Specifies that SASL authentication is required.
-export interface AuthenticationSASL {
-    messageType: Byte1     // Byte1('R')
-    length:      Int32     // Int32
-    code:        Int32     // Int32(10)
-} // AuthenticationSASL
-
-export const parseAuthenticationSASL: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationSASL> = async (adapter, baseMessage) => {
-    const code: Int32 = await parseInt32(adapter)
-    return {
-        ...baseMessage,
-        code,
-    }
-}
-
-export function isAuthenticationSASL(baseMessage: IBackendMessage): baseMessage is AuthenticationSASL {
-    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 10
-}
 
 //#endregion
 
@@ -298,6 +108,7 @@ export const parseBackendKeyData: (adapter: DataTypeAdapter, baseMessage: IBacke
 export function isBackendKeyData(baseMessage: IBackendMessage): baseMessage is BackendKeyData {
     return baseMessage.messageType === 'K'
 }
+
 
 //#endregion
 
@@ -332,6 +143,7 @@ export function isBind(baseMessage: IBackendMessage): baseMessage is Bind {
     return baseMessage.messageType === 'B'
 }
 
+
 //#endregion
 
 //#region BindComplete
@@ -348,6 +160,7 @@ export const parseBindComplete: (_adapter: DataTypeAdapter, baseMessage: IBacken
 export function isBindComplete(baseMessage: IBackendMessage): baseMessage is BindComplete {
     return baseMessage.messageType === '2'
 }
+
 
 //#endregion
 
@@ -371,6 +184,7 @@ export interface CancelRequest {
 
 // No type guard: messageType[0] === 'length'
 
+
 //#endregion
 
 //#region Close
@@ -393,6 +207,7 @@ export function isClose(baseMessage: IBackendMessage): baseMessage is Close {
     return baseMessage.messageType === 'C'
 }
 
+
 //#endregion
 
 //#region CloseComplete
@@ -409,6 +224,7 @@ export const parseCloseComplete: (_adapter: DataTypeAdapter, baseMessage: IBacke
 export function isCloseComplete(baseMessage: IBackendMessage): baseMessage is CloseComplete {
     return baseMessage.messageType === '3'
 }
+
 
 //#endregion
 
@@ -453,6 +269,7 @@ export function isCommandComplete(baseMessage: IBackendMessage): baseMessage is 
     return baseMessage.messageType === 'C'
 }
 
+
 //#endregion
 
 //#region CopyFail
@@ -471,6 +288,7 @@ export interface CopyFail {
 export function isCopyFail(baseMessage: IBackendMessage): baseMessage is CopyFail {
     return baseMessage.messageType === 'f'
 }
+
 
 //#endregion
 
@@ -513,6 +331,7 @@ export function isCopyInResponse(baseMessage: IBackendMessage): baseMessage is C
     return baseMessage.messageType === 'G'
 }
 
+
 //#endregion
 
 //#region CopyOutResponse
@@ -552,6 +371,7 @@ export const parseCopyOutResponse: (adapter: DataTypeAdapter, baseMessage: IBack
 export function isCopyOutResponse(baseMessage: IBackendMessage): baseMessage is CopyOutResponse {
     return baseMessage.messageType === 'H'
 }
+
 
 //#endregion
 
@@ -593,6 +413,7 @@ export function isCopyBothResponse(baseMessage: IBackendMessage): baseMessage is
     return baseMessage.messageType === 'W'
 }
 
+
 //#endregion
 
 //#region DataRow
@@ -628,6 +449,7 @@ export function isDataRow(baseMessage: IBackendMessage): baseMessage is DataRow 
     return baseMessage.messageType === 'D'
 }
 
+
 //#endregion
 
 //#region Describe
@@ -650,6 +472,7 @@ export function isDescribe(baseMessage: IBackendMessage): baseMessage is Describ
     return baseMessage.messageType === 'D'
 }
 
+
 //#endregion
 
 //#region EmptyQueryResponse
@@ -668,6 +491,7 @@ export function isEmptyQueryResponse(baseMessage: IBackendMessage): baseMessage 
     return baseMessage.messageType === 'I'
 }
 
+
 //#endregion
 
 //#region ErrorResponse
@@ -684,6 +508,7 @@ export const parseErrorResponse: (_adapter: DataTypeAdapter, baseMessage: IBacke
 export function isErrorResponse(baseMessage: IBackendMessage): baseMessage is ErrorResponse {
     return baseMessage.messageType === 'E'
 }
+
 
 //#endregion
 
@@ -708,6 +533,7 @@ export function isExecute(baseMessage: IBackendMessage): baseMessage is Execute 
     return baseMessage.messageType === 'E'
 }
 
+
 //#endregion
 
 //#region Flush
@@ -724,6 +550,7 @@ export interface Flush {
 export function isFlush(baseMessage: IBackendMessage): baseMessage is Flush {
     return baseMessage.messageType === 'H'
 }
+
 
 //#endregion
 
@@ -742,6 +569,7 @@ export function isNoData(baseMessage: IBackendMessage): baseMessage is NoData {
     return baseMessage.messageType === 'n'
 }
 
+
 //#endregion
 
 //#region NoticeResponse
@@ -758,6 +586,7 @@ export const parseNoticeResponse: (_adapter: DataTypeAdapter, baseMessage: IBack
 export function isNoticeResponse(baseMessage: IBackendMessage): baseMessage is NoticeResponse {
     return baseMessage.messageType === 'N'
 }
+
 
 //#endregion
 
@@ -792,6 +621,7 @@ export function isNotificationResponse(baseMessage: IBackendMessage): baseMessag
     return baseMessage.messageType === 'A'
 }
 
+
 //#endregion
 
 //#region ParameterDescription
@@ -823,6 +653,7 @@ export function isParameterDescription(baseMessage: IBackendMessage): baseMessag
     return baseMessage.messageType === 't'
 }
 
+
 //#endregion
 
 //#region ParameterStatus
@@ -852,6 +683,7 @@ export function isParameterStatus(baseMessage: IBackendMessage): baseMessage is 
     return baseMessage.messageType === 'S'
 }
 
+
 //#endregion
 
 //#region Parse
@@ -879,6 +711,7 @@ export function isParse(baseMessage: IBackendMessage): baseMessage is Parse {
     return baseMessage.messageType === 'P'
 }
 
+
 //#endregion
 
 //#region ParseComplete
@@ -895,6 +728,7 @@ export const parseParseComplete: (_adapter: DataTypeAdapter, baseMessage: IBacke
 export function isParseComplete(baseMessage: IBackendMessage): baseMessage is ParseComplete {
     return baseMessage.messageType === '1'
 }
+
 
 //#endregion
 
@@ -917,6 +751,7 @@ export function isPasswordMessage(baseMessage: IBackendMessage): baseMessage is 
     return baseMessage.messageType === 'p'
 }
 
+
 //#endregion
 
 //#region PortalSuspended
@@ -934,6 +769,7 @@ export const parsePortalSuspended: (_adapter: DataTypeAdapter, baseMessage: IBac
 export function isPortalSuspended(baseMessage: IBackendMessage): baseMessage is PortalSuspended {
     return baseMessage.messageType === 's'
 }
+
 
 //#endregion
 
@@ -953,6 +789,7 @@ export interface Query {
 export function isQuery(baseMessage: IBackendMessage): baseMessage is Query {
     return baseMessage.messageType === 'Q'
 }
+
 
 //#endregion
 
@@ -982,6 +819,7 @@ export const parseReadyForQuery: (adapter: DataTypeAdapter, baseMessage: IBacken
 export function isReadyForQuery(baseMessage: IBackendMessage): baseMessage is ReadyForQuery {
     return baseMessage.messageType === 'Z'
 }
+
 
 //#endregion
 
@@ -1032,6 +870,7 @@ export const parseIField: (adapter: DataTypeAdapter) => Promise<IField> = async 
 
 // No type guard: messageType[0] === 'name'
 
+
 //#endregion
 
 //#region RowDescription
@@ -1062,6 +901,7 @@ export function isRowDescription(baseMessage: IBackendMessage): baseMessage is R
     return baseMessage.messageType === 'T'
 }
 
+
 //#endregion
 
 //#region SSLRequest
@@ -1079,6 +919,7 @@ export interface SSLRequest {
 // no parser for SSLRequest - currently only creating parsers for backend messages
 
 // No type guard: itemType: Int32
+
 
 //#endregion
 
@@ -1098,6 +939,7 @@ export interface StartupMessage {
 
 // No type guard: messageType[0] === 'length'
 
+
 //#endregion
 
 //#region Sync
@@ -1114,6 +956,7 @@ export interface Sync {
 export function isSync(baseMessage: IBackendMessage): baseMessage is Sync {
     return baseMessage.messageType === 'S'
 }
+
 
 //#endregion
 
@@ -1132,6 +975,115 @@ export function isTerminate(baseMessage: IBackendMessage): baseMessage is Termin
     return baseMessage.messageType === 'X'
 }
 
+
+//#endregion
+
+//#region BackendParser
+
+export async function parseBackendMessage(adapter: DataTypeAdapter): Promise<IBackendMessage> {
+    const baseMessage: IBackendMessage = await parseIBackendMessage(adapter)
+    const _isIAuthenticationMessage: boolean = isIAuthenticationMessage(baseMessage)
+    if (_isIAuthenticationMessage) {
+        return parseAuthentication(adapter, baseMessage)
+    }
+    
+    const _isBackendKeyData: boolean = isBackendKeyData(baseMessage)
+    if (_isBackendKeyData) {
+        return parseBackendKeyData(adapter, baseMessage)
+    }
+    
+    const _isBindComplete: boolean = isBindComplete(baseMessage)
+    if (_isBindComplete) {
+        return parseBindComplete(adapter, baseMessage)
+    }
+    
+    const _isCloseComplete: boolean = isCloseComplete(baseMessage)
+    if (_isCloseComplete) {
+        return parseCloseComplete(adapter, baseMessage)
+    }
+    
+    const _isCommandComplete: boolean = isCommandComplete(baseMessage)
+    if (_isCommandComplete) {
+        return parseCommandComplete(adapter, baseMessage)
+    }
+    
+    const _isCopyInResponse: boolean = isCopyInResponse(baseMessage)
+    if (_isCopyInResponse) {
+        return parseCopyInResponse(adapter, baseMessage)
+    }
+    
+    const _isCopyOutResponse: boolean = isCopyOutResponse(baseMessage)
+    if (_isCopyOutResponse) {
+        return parseCopyOutResponse(adapter, baseMessage)
+    }
+    
+    const _isCopyBothResponse: boolean = isCopyBothResponse(baseMessage)
+    if (_isCopyBothResponse) {
+        return parseCopyBothResponse(adapter, baseMessage)
+    }
+    
+    const _isDataRow: boolean = isDataRow(baseMessage)
+    if (_isDataRow) {
+        return parseDataRow(adapter, baseMessage)
+    }
+    
+    const _isEmptyQueryResponse: boolean = isEmptyQueryResponse(baseMessage)
+    if (_isEmptyQueryResponse) {
+        return parseEmptyQueryResponse(adapter, baseMessage)
+    }
+    
+    const _isErrorResponse: boolean = isErrorResponse(baseMessage)
+    if (_isErrorResponse) {
+        return parseErrorResponse(adapter, baseMessage)
+    }
+    
+    const _isNoData: boolean = isNoData(baseMessage)
+    if (_isNoData) {
+        return parseNoData(adapter, baseMessage)
+    }
+    
+    const _isNoticeResponse: boolean = isNoticeResponse(baseMessage)
+    if (_isNoticeResponse) {
+        return parseNoticeResponse(adapter, baseMessage)
+    }
+    
+    const _isNotificationResponse: boolean = isNotificationResponse(baseMessage)
+    if (_isNotificationResponse) {
+        return parseNotificationResponse(adapter, baseMessage)
+    }
+    
+    const _isParameterDescription: boolean = isParameterDescription(baseMessage)
+    if (_isParameterDescription) {
+        return parseParameterDescription(adapter, baseMessage)
+    }
+    
+    const _isParameterStatus: boolean = isParameterStatus(baseMessage)
+    if (_isParameterStatus) {
+        return parseParameterStatus(adapter, baseMessage)
+    }
+    
+    const _isParseComplete: boolean = isParseComplete(baseMessage)
+    if (_isParseComplete) {
+        return parseParseComplete(adapter, baseMessage)
+    }
+    
+    const _isPortalSuspended: boolean = isPortalSuspended(baseMessage)
+    if (_isPortalSuspended) {
+        return parsePortalSuspended(adapter, baseMessage)
+    }
+    
+    const _isReadyForQuery: boolean = isReadyForQuery(baseMessage)
+    if (_isReadyForQuery) {
+        return parseReadyForQuery(adapter, baseMessage)
+    }
+    
+    const _isRowDescription: boolean = isRowDescription(baseMessage)
+    if (_isRowDescription) {
+        return parseRowDescription(adapter, baseMessage)
+    }
+    
+    throw new Error(`Couldn't parse backend message: ${JSON.stringify(baseMessage)}`)
+}
 //#endregion
 
 /* DO NOT EDIT THIS FILE!!!  It has been generated for your pleasure. */

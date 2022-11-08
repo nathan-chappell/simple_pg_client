@@ -15,6 +15,7 @@ export class ParameterList extends Configurable<ParameterListOptions> implements
             parameterOptions: {
                 withDefault: false,
                 withType: false,
+                hyphenPrefix: false,
             },
         })
     }

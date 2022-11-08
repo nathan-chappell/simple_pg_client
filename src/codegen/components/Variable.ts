@@ -1,6 +1,7 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Configurable } from '../Configurable.ts'
 import { IComponent } from './IComponent.ts'
+import { Parameter } from './Parameter.ts'
 
 export interface VariableOptions {
     decl: null | 'let' | 'const'
@@ -34,5 +35,9 @@ export class Variable extends Configurable<VariableOptions> implements IComponen
                 .alignIf(this.options.assignmentAlignment)
                 .writeIf(this.options.value !== null, ' = ', this.options.value!)
         }
+    }
+
+    get asParameter(): Parameter {
+        return new Parameter(this.name, this.type, this.options.value)
     }
 }
