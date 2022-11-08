@@ -27,12 +27,12 @@ import {
 // * @messageType: Identifies the message as an authentication request.
 // * @length: Length of message contents in bytes, including self.
 export interface IBackendMessage {
-    messageType: String     // String
-    length:      Int32      // Int32
+    messageType: Byte1     // Byte1
+    length:      Int32     // Int32
 } // IBackendMessage
 
 export const parseIBackendMessage: (adapter: DataTypeAdapter) => Promise<IBackendMessage> = async (adapter) => {
-    const messageType: String = await parseString(adapter)
+    const messageType: Byte1 = await parseByte1(adapter)
     const length: Int32 = await parseInt32(adapter)
     return {
         messageType,

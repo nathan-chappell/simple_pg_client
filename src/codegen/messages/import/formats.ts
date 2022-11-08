@@ -20,7 +20,7 @@ export const formats: IMessageFormat[] = [
         "definition": [
             {
                 "name": "messageType",
-                "type": "String",
+                "type": "Byte1",
                 "definition": "Identifies the message as an authentication request.",
             },
             {

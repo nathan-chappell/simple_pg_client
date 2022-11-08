@@ -24,38 +24,49 @@ export class Message {
                     type: p.typeInfo.tsType,
                     lineComment: p.typeInfo.rawType,
                 } as InterfacePropertyOptions
-            })
+            }),
         ).with({
             comment: new Comment(this.info.properties.map(p => `* @${p.name}: ${p.definition}`)),
             extends: this.info.extendsIBackendMessage ? ['IBackendMessage'] : [],
         })
     }
 
-    get guard(): Function_ | string {
+    // returns null if true, otherwise an explanatory message as to why not
+    shouldCreateGuard(): string | null {
         const name0 = this.info.properties[0].name
         const typeInfo0 = this.info.properties[0].typeInfo
         // prettier-ignore
-        const typeInfo2 = this.info.extendsAuthentication ? this.info.properties[2].typeInfo : null
         if (name0 !== 'messageType') {
             return `No type guard: messageType[0] === '${name0}'`
         } else if (typeInfo0.options.expected === null) {
             return `No type guard: no expected messageType`
         } else if (typeInfo0.options.itemType !== 'Byte1') {
             return `No type guard: itemType: ${typeInfo0.options.itemType}`
-        } else {
-            // prettier-ignore
-            return new Function_(
+        }
+        return null
+    }
+
+    _guardBody(): string {
+        const expectedMessageType = this.info.properties[0].typeInfo.options.expected
+        const expectedCode = this.info.properties[2]?.typeInfo.options.expected
+        return this.info.extendsAuthentication
+            ? `return isIAuthenticationMessage(baseMessage) && baseMessage.code === ${expectedCode}`
+            : `return baseMessage.messageType === ${expectedMessageType}`
+    }
+
+    get guard(): Function_ | string {
+        const shouldCreateGuardMessage = this.shouldCreateGuard()
+        if (shouldCreateGuardMessage !== null) return shouldCreateGuardMessage
+        // prettier-ignore
+        return new Function_(
                 `is${this.info.name}`,
                 new ParameterList([baseMessageParameter]),
                 `baseMessage is ${this.info.name}`
             ).with({
                 arrow_: false,
                 export_: true,
-                body: _compiler => this.info.extendsAuthentication
-                ? _compiler.writeLine(`return isIAuthenticationMessage(baseMessage) && baseMessage.code === ${typeInfo2!.options.expected}`)
-                : _compiler.writeLine(`return baseMessage.messageType === ${typeInfo0.options.expected}`)
+                body: _compiler => _compiler.writeLine(this._guardBody())
             })
-        }
     }
 
     get parser(): Function_ | string {
@@ -130,7 +141,7 @@ export class Message {
             new If_(shouldParseSaltVariable).with({
                 body: _compiler =>
                     _compiler.embed(
-                        new ParseResult(saltVariable.with({ decl: null }), TypeInfo.fromRawType('Byte4'))
+                        new ParseResult(saltVariable.with({ decl: null }), TypeInfo.fromRawType('Byte4')),
                     ),
             }),
         ]

@@ -3,11 +3,25 @@ import { readBytesWhile, readNBytes, yieldBytes } from './yieldBytes.ts'
 
 export const stringToBytes = (s: string) => [...[...s].map(c => c.charCodeAt(0)), 0]
 
+class NotAnError extends Error {}
+
 export class DataTypeAdapter {
     byteYielder: AsyncGenerator<number, void, undefined>
 
     constructor(readable: ReadableStream) {
         this.byteYielder = yieldBytes(readable)
+    }
+
+    async release() {
+        try {
+            await this.byteYielder.throw(new NotAnError())
+        } catch (error) {
+            if (error instanceof NotAnError) {
+                return
+            } else {
+                throw error
+            }
+        }
     }
 
     async readInt8(): Promise<Byte> {

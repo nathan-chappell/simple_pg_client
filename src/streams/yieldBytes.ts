@@ -10,8 +10,6 @@ export async function* yieldBytes(readable: ReadableStream) {
             if (done) throw new YieldBytesError(`stream is done`)
             yield* value
         }
-    } catch (error) {
-        throw new YieldBytesError(error)
     } finally {
         reader.releaseLock()
     }
@@ -49,5 +47,6 @@ export async function readBytesWhile(
     }
 }
 
-export const readNBytes = (byteYielder: AsyncGenerator<Byte, void, undefined>, n: number) =>
-    readBytesWhile(byteYielder, () => --n > 0)
+export const readNBytes = (byteYielder: AsyncGenerator<Byte, void, undefined>, n: number) => {
+    return readBytesWhile(byteYielder, () => --n > 0)
+}

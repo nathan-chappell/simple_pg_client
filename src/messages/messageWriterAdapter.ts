@@ -54,19 +54,32 @@ export class MessageWriterAdapter {
         this.writer = writable.getWriter()
     }
 
+    release() {
+        this.writer.releaseLock()
+    }
+
     writeMessage(message: ITypedValue[]): Promise<void> {
         const lengthIndex = message.findIndex(tv => tv.name === 'length')
         if (lengthIndex === -1) {
             throw new Error(`[MessageWriterAdapter.writeMessage] all messages must have a "length" value`)
         }
+
         const lengthType = message[lengthIndex].type
         if (lengthType !== 'Int32') {
             throw new Error(`[MessageWriterAdapter.writeMessage] only length types of Int32 are expected`)
         }
+
         const byteArrays = message.map(toByteArray)
         const length = byteArrays.reduce((acc, a) => acc + a.length, 0)
         byteArrays[lengthIndex] = toByteArray({ type: lengthType, value: length } as ITypedNumberValue)
         const bytes = Uint8Array.from(byteArrays.flat())
-        return this.writer.write(bytes)
+        console.log(`writing: ${bytes}`)
+        try {
+            return this.writer.write(bytes)
+        } catch (error) {
+            console.log('here')
+            console.error(error)
+            throw error
+        }
     }
 }
