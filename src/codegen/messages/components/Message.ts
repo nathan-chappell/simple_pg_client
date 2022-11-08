@@ -5,47 +5,33 @@ import { ParameterList } from '../../components/ParameterList.ts'
 import { Parameter } from '../../components/Parameter.ts'
 import { Variable } from '../../components/Variable.ts'
 import { Block } from '../../structures/Block.ts'
-import { IMessageFormat } from '../import/formats.ts'
+import { MessageInfo } from './MessageInfo.ts'
 import { ParseResult } from './ParseResult.ts'
-import { TypeInfo } from './TypeInfo.ts'
 
 export class Message {
-    constructor(public format: IMessageFormat) {}
-
-    get isAuthentication() {
-        return this.format.title === 'IAuthenticationMessage'
-    }
-
-    get extendsAuthentication() {
-        return !this.format.internal && this.format.title.match(/Authentication/) !== null
-    }
-
-    get extendsIBackendMessage() {
-        return !this.format.internal
-    }
+    constructor(public info: MessageInfo) {}
 
     get interface(): Interface {
         return new Interface(
-            this.format.title,
-            this.format.definition.map(p => {
-                const typeInfo = TypeInfo.fromRawType(p.type)
+            this.info.name,
+            this.info.properties.map(p => {
                 return {
                     name: p.name,
-                    type: typeInfo.tsType,
-                    lineComment: typeInfo.rawType,
+                    type: p.typeInfo.tsType,
+                    lineComment: p.typeInfo.rawType,
                 } as InterfacePropertyOptions
             })
         ).with({
-            comment: new Comment(this.format.definition.map(p => `* @${p.name}: ${p.definition}`)),
-            extends: this.extendsIBackendMessage ? ['IBackendMessage'] : [],
+            comment: new Comment(this.info.properties.map(p => `* @${p.name}: ${p.definition}`)),
+            extends: this.info.extendsIBackendMessage ? ['IBackendMessage'] : [],
         })
     }
 
     get guard(): Function_ | string {
-        const name0 = this.format.definition[0].name
-        const typeInfo0 = TypeInfo.fromRawType(this.format.definition[0].type)
+        const name0 = this.info.properties[0].name
+        const typeInfo0 = this.info.properties[0].typeInfo
         // prettier-ignore
-        const typeInfo2 = this.extendsAuthentication ? TypeInfo.fromRawType(this.format.definition[2].type) : null
+        const typeInfo2 = this.info.extendsAuthentication ? this.info.properties[2].typeInfo : null
         if (name0 !== 'messageType') {
             return `No type guard: messageType[0] === '${name0}'`
         } else if (typeInfo0.options.expected === null) {
@@ -55,13 +41,13 @@ export class Message {
         } else {
             // prettier-ignore
             return new Function_(
-                `is${this.format.title}`,
+                `is${this.info.name}`,
                 new ParameterList([new Parameter('baseMessage', 'IBackendMessage')]),
-                `baseMessage is ${this.format.title}`
+                `baseMessage is ${this.info.name}`
             ).with({
                 arrow_: false,
                 export_: true,
-                body: _compiler => this.extendsAuthentication
+                body: _compiler => this.info.extendsAuthentication
                 ? _compiler.writeLine(`return isIAuthenticationMessage(baseMessage) && baseMessage.code === ${typeInfo2!.options.expected}`)
                 : _compiler.writeLine(`return baseMessage.messageType === ${typeInfo0.options.expected}`)
             })
@@ -69,25 +55,20 @@ export class Message {
     }
 
     get parser(): Function_ | string {
-        if (!this.format.backend) {
-            return `no parser for ${this.format.title} - currently only creating parsers for backend messages`
-        } else if (this.isAuthentication) {
-            return `no parser for ${this.format.title} - authentication is handled separately`
+        if (!this.info.isBackend) {
+            return `no parser for ${this.info.name} - currently only creating parsers for backend messages`
+        } else if (this.info.isAuthentication) {
+            return `no parser for ${this.info.name} - authentication is handled separately`
         } else {
             const parameterList = new ParameterList([new Parameter('adapter', 'DataTypeAdapter')])
-            let fields = this.format.definition
-            if (this.extendsIBackendMessage) {
+            let fields = this.info.properties
+            if (this.info.extendsIBackendMessage) {
                 parameterList.parameters.push(new Parameter('baseMessage', 'IBackendMessage'))
                 fields = fields.slice(2)
             }
             const noAdditionalFields = fields.length === 0
-            if (noAdditionalFields)
-                parameterList.parameters[0].name = `_${parameterList.parameters[0].name}`
-            return new Function_(
-                `parse${this.format.title}`,
-                parameterList,
-                `Promise<${this.format.title}>`
-            ).with({
+            if (noAdditionalFields) parameterList.parameters[0].name = `_${parameterList.parameters[0].name}`
+            return new Function_(`parse${this.info.name}`, parameterList, `Promise<${this.info.name}>`).with({
                 async_: true,
                 arrow_: true,
                 const_: true,
@@ -98,15 +79,14 @@ export class Message {
                         compiler.write('baseMessage')
                     } else {
                         for (const field of fields) {
-                            const typeInfo = TypeInfo.fromRawType(field.type)
                             // prettier-ignore
-                            const variable = new Variable(field.name, typeInfo.tsType).with({ decl: 'const' })
-                            compiler.embed(new ParseResult(variable, typeInfo))
+                            const variable = new Variable(field.name, field.typeInfo.tsType).with({ decl: 'const' })
+                            compiler.embed(new ParseResult(variable, field.typeInfo))
                         }
                         return compiler
                             .write('return ')
                             .build(new Block(), () => {
-                                if (this.extendsIBackendMessage) compiler.writeLine('...baseMessage,')
+                                if (this.info.extendsIBackendMessage) compiler.writeLine('...baseMessage,')
                                 for (const field of fields) compiler.writeLine(field.name, ',')
                             })
                             .newLine()
