@@ -23,3 +23,16 @@ A minimal client for postgres completely written in typescript
 * implement some principled logging/errors
 * tests
 * protocol (state-machine)
+
+### Tasks
+
+1. Write some tests
+    * Hand-jam a few
+    * Generalize and implement generation (if feasible)
+2. Implement generation of parseAuthorization
+    * Implement `class If implements IComponent, IStructure`
+    * Parse need to check if `AuthenticationMD5Password` message type (`code: Int32(5)`)
+    * If so, parse `salt: Byte4`
+        * Implement parsing of optional types (`Byte4?`)
+        * 
+3. 

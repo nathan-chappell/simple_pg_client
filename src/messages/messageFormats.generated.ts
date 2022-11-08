@@ -44,6 +44,28 @@ export const parseIBackendMessage: (adapter: DataTypeAdapter) => Promise<IBacken
 
 //#endregion
 
+//#region IAuthenticationMessage
+
+// * @messageType: Identifies the message as an authentication request.
+// * @length: Length of message contents in bytes, including self.
+// * @code: Specifies that the authentication was successful.
+// * @salt: The salt to use when encrypting the password.
+export interface IAuthenticationMessage {
+    messageType: Byte1            // Byte1('R')
+    length:      Int32            // Int32
+    code:        Int32            // Int32
+    salt:        Byte4 |          // Byte4?
+                 null             // 
+} // IAuthenticationMessage
+
+// no parser for IAuthenticationMessage - authentication is handled separately
+
+export function isIAuthenticationMessage(baseMessage: IBackendMessage): baseMessage is IAuthenticationMessage {
+    return baseMessage.messageType === 'R'
+}
+
+//#endregion
+
 //#region AuthenticationOk
 
 // * @messageType: Identifies the message as an authentication request.
@@ -55,10 +77,16 @@ export interface AuthenticationOk {
     code:        Int32     // Int32(0)
 } // AuthenticationOk
 
-// no parser for AuthenticationOk - authentication is handled separately
+export const parseAuthenticationOk: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationOk> = async (adapter, baseMessage) => {
+    const code: Int32 = await parseInt32(adapter)
+    return {
+        ...baseMessage,
+        code,
+    }
+}
 
 export function isAuthenticationOk(baseMessage: IBackendMessage): baseMessage is AuthenticationOk {
-    return baseMessage.messageType === 'R'
+    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 0
 }
 
 //#endregion
@@ -74,10 +102,16 @@ export interface AuthenticationKerberosV5 {
     code:        Int32     // Int32(2)
 } // AuthenticationKerberosV5
 
-// no parser for AuthenticationKerberosV5 - authentication is handled separately
+export const parseAuthenticationKerberosV5: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationKerberosV5> = async (adapter, baseMessage) => {
+    const code: Int32 = await parseInt32(adapter)
+    return {
+        ...baseMessage,
+        code,
+    }
+}
 
 export function isAuthenticationKerberosV5(baseMessage: IBackendMessage): baseMessage is AuthenticationKerberosV5 {
-    return baseMessage.messageType === 'R'
+    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 2
 }
 
 //#endregion
@@ -93,10 +127,16 @@ export interface AuthenticationCleartextPassword {
     code:        Int32     // Int32(3)
 } // AuthenticationCleartextPassword
 
-// no parser for AuthenticationCleartextPassword - authentication is handled separately
+export const parseAuthenticationCleartextPassword: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationCleartextPassword> = async (adapter, baseMessage) => {
+    const code: Int32 = await parseInt32(adapter)
+    return {
+        ...baseMessage,
+        code,
+    }
+}
 
 export function isAuthenticationCleartextPassword(baseMessage: IBackendMessage): baseMessage is AuthenticationCleartextPassword {
-    return baseMessage.messageType === 'R'
+    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 3
 }
 
 //#endregion
@@ -114,10 +154,18 @@ export interface AuthenticationMD5Password {
     salt:        Byte4     // Byte4
 } // AuthenticationMD5Password
 
-// no parser for AuthenticationMD5Password - authentication is handled separately
+export const parseAuthenticationMD5Password: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationMD5Password> = async (adapter, baseMessage) => {
+    const code: Int32 = await parseInt32(adapter)
+    const salt: Byte4 = await parseByte4(adapter)
+    return {
+        ...baseMessage,
+        code,
+        salt,
+    }
+}
 
 export function isAuthenticationMD5Password(baseMessage: IBackendMessage): baseMessage is AuthenticationMD5Password {
-    return baseMessage.messageType === 'R'
+    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 5
 }
 
 //#endregion
@@ -133,10 +181,16 @@ export interface AuthenticationSCMCredential {
     code:        Int32     // Int32(6)
 } // AuthenticationSCMCredential
 
-// no parser for AuthenticationSCMCredential - authentication is handled separately
+export const parseAuthenticationSCMCredential: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationSCMCredential> = async (adapter, baseMessage) => {
+    const code: Int32 = await parseInt32(adapter)
+    return {
+        ...baseMessage,
+        code,
+    }
+}
 
 export function isAuthenticationSCMCredential(baseMessage: IBackendMessage): baseMessage is AuthenticationSCMCredential {
-    return baseMessage.messageType === 'R'
+    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 6
 }
 
 //#endregion
@@ -152,10 +206,16 @@ export interface AuthenticationGSS {
     code:        Int32     // Int32(7)
 } // AuthenticationGSS
 
-// no parser for AuthenticationGSS - authentication is handled separately
+export const parseAuthenticationGSS: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationGSS> = async (adapter, baseMessage) => {
+    const code: Int32 = await parseInt32(adapter)
+    return {
+        ...baseMessage,
+        code,
+    }
+}
 
 export function isAuthenticationGSS(baseMessage: IBackendMessage): baseMessage is AuthenticationGSS {
-    return baseMessage.messageType === 'R'
+    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 7
 }
 
 //#endregion
@@ -171,10 +231,16 @@ export interface AuthenticationSSPI {
     code:        Int32     // Int32(9)
 } // AuthenticationSSPI
 
-// no parser for AuthenticationSSPI - authentication is handled separately
+export const parseAuthenticationSSPI: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationSSPI> = async (adapter, baseMessage) => {
+    const code: Int32 = await parseInt32(adapter)
+    return {
+        ...baseMessage,
+        code,
+    }
+}
 
 export function isAuthenticationSSPI(baseMessage: IBackendMessage): baseMessage is AuthenticationSSPI {
-    return baseMessage.messageType === 'R'
+    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 9
 }
 
 //#endregion
@@ -190,10 +256,16 @@ export interface AuthenticationSASL {
     code:        Int32     // Int32(10)
 } // AuthenticationSASL
 
-// no parser for AuthenticationSASL - authentication is handled separately
+export const parseAuthenticationSASL: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<AuthenticationSASL> = async (adapter, baseMessage) => {
+    const code: Int32 = await parseInt32(adapter)
+    return {
+        ...baseMessage,
+        code,
+    }
+}
 
 export function isAuthenticationSASL(baseMessage: IBackendMessage): baseMessage is AuthenticationSASL {
-    return baseMessage.messageType === 'R'
+    return isIAuthenticationMessage(baseMessage) && baseMessage.code === 10
 }
 
 //#endregion

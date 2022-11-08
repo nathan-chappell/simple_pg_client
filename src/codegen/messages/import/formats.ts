@@ -30,28 +30,33 @@ export const formats: IMessageFormat[] = [
             },
         ],
     },
-        // {
-        //     internal: true,
-        //     backend: true,
-        //     "title": "IAuthenticationMessage",
-        //     "definition": [
-        //         {
-        //             "name": "messageType",
-        //             "type": "String",
-        //             "definition": "Identifies the message as an authentication request.",
-        //         },
-        //         {
-        //             "name": "length",
-        //             "type": "Int32",
-        //             "definition": "Length of message contents in bytes, including self.",
-        //         },
-        //         {
-        //             "name": "code",
-        //             "type": "Int32",
-        //             "definition": "Specifies that the authentication was successful.",
-        //         },
-        //     ],
-        // },
+    {
+        internal: true,
+        backend: true,
+        "title": "IAuthenticationMessage",
+        "definition": [
+            {
+                "name": "messageType",
+                "type": "Byte1('R')",
+                "definition": "Identifies the message as an authentication request.",
+            },
+            {
+                "name": "length",
+                "type": "Int32",
+                "definition": "Length of message contents in bytes, including self.",
+            },
+            {
+                "name": "code",
+                "type": "Int32",
+                "definition": "Specifies that the authentication was successful.",
+            },
+            {
+                "name": "salt",
+                "type": "Byte4?",
+                "definition": "The salt to use when encrypting the password.",
+            },
+        ],
+    },
     {
         backend: true,
         "title": "AuthenticationOk",

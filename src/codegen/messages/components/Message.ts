@@ -13,7 +13,11 @@ export class Message {
     constructor(public format: IMessageFormat) {}
 
     get isAuthentication() {
-        return this.format.title.match(/Authentication\w+/) !== null
+        return this.format.title === 'IAuthenticationMessage'
+    }
+
+    get extendsAuthentication() {
+        return !this.format.internal && this.format.title.match(/Authentication/) !== null
     }
 
     get extendsIBackendMessage() {
@@ -40,6 +44,8 @@ export class Message {
     get guard(): Function_ | string {
         const name0 = this.format.definition[0].name
         const typeInfo0 = TypeInfo.fromRawType(this.format.definition[0].type)
+        // prettier-ignore
+        const typeInfo2 = this.extendsAuthentication ? TypeInfo.fromRawType(this.format.definition[2].type) : null
         if (name0 !== 'messageType') {
             return `No type guard: messageType[0] === '${name0}'`
         } else if (typeInfo0.options.expected === null) {
@@ -47,6 +53,7 @@ export class Message {
         } else if (typeInfo0.options.itemType !== 'Byte1') {
             return `No type guard: itemType: ${typeInfo0.options.itemType}`
         } else {
+            // prettier-ignore
             return new Function_(
                 `is${this.format.title}`,
                 new ParameterList([new Parameter('baseMessage', 'IBackendMessage')]),
@@ -54,8 +61,9 @@ export class Message {
             ).with({
                 arrow_: false,
                 export_: true,
-                body: _compiler =>
-                    _compiler.writeLine(`return baseMessage.messageType === ${typeInfo0.options.expected}`),
+                body: _compiler => this.extendsAuthentication
+                ? _compiler.writeLine(`return isIAuthenticationMessage(baseMessage) && baseMessage.code === ${typeInfo2!.options.expected}`)
+                : _compiler.writeLine(`return baseMessage.messageType === ${typeInfo0.options.expected}`)
             })
         }
     }
@@ -73,7 +81,8 @@ export class Message {
                 fields = fields.slice(2)
             }
             const noAdditionalFields = fields.length === 0
-            if (noAdditionalFields) parameterList.parameters[0].name = `_${parameterList.parameters[0].name}`
+            if (noAdditionalFields)
+                parameterList.parameters[0].name = `_${parameterList.parameters[0].name}`
             return new Function_(
                 `parse${this.format.title}`,
                 parameterList,
@@ -97,12 +106,8 @@ export class Message {
                         return compiler
                             .write('return ')
                             .build(new Block(), () => {
-                                if (this.extendsIBackendMessage) {
-                                    compiler.writeLine('...baseMessage,')
-                                }
-                                for (const field of fields) {
-                                    compiler.writeLine(field.name, ',')
-                                }
+                                if (this.extendsIBackendMessage) compiler.writeLine('...baseMessage,')
+                                for (const field of fields) compiler.writeLine(field.name, ',')
                             })
                             .newLine()
                     }
