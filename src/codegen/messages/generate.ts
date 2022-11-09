@@ -1,5 +1,7 @@
 import { adapterParameter } from './components/common.ts'
 import { BackendParser } from './components/BackendParser.ts'
+import { EmptyLine } from '../components/EmptyLine.ts'
+import { FileTemplate } from '../components/FileTemplate.ts'
 import { Function_ } from '../components/Function_.ts'
 import { Import } from '../components/Import.ts'
 import { Message } from './components/Message.ts'
@@ -10,9 +12,11 @@ import { TypeDef } from '../components/TypeDef.ts'
 
 import { Dependencies } from '../Dependencies.ts'
 import { FileGenerator } from '../FileGenerator.ts'
+import { ITypedValue } from '../../messages/messageWriterAdapter.ts'
+
 import { formats } from './import/formats.ts'
-import { FileTemplate } from '../components/FileTemplate.ts'
-import { EmptyLine } from '../components/EmptyLine.ts'
+import { TypedValueGenerator } from './components/sampleMessage.ts'
+import { TypeInfo } from './components/TypeInfo.ts'
 
 //#region Deno API thunks
 
@@ -108,12 +112,22 @@ const messageFormatFileGenerator = new FileGenerator('messageFormats', outputDir
 //#region write/read tests
 
 const writeReadTestTemplate = new FileTemplate('messageFormat.test', './src/codegen/messages/templates') // getTemplate('messageFormat.test')
+// const getSampleMessage: (message: Message) => ITypedValue[] = (message) => message.info.properties.map(p => ({
+//     name: p.name,
+//     type: p.typeInfo.tsType,
+//     value:
+// }))
+
+const typedValueGenerator = new TypedValueGenerator()
 
 const makeWriteReadTestFileGenerator: (message: Message) => FileGenerator = message =>
     new FileGenerator(`writeReadTest.${message.info.name}.test`, `${outputDirectory}/tests`).with({
         components: [
             writeReadTestTemplate.with({
-                replacements: { __MESSAGE_TYPE__: message.info.name },
+                replacements: {
+                    __MESSAGE_TYPE__: message.info.name,
+                    __EXPECTED_TYPED_VALUES__: JSON.stringify(typedValueGenerator.nextMessage(message)),
+                },
             }),
         ],
     })
@@ -129,4 +143,9 @@ messageFormatFileGenerator.emit()
 for (const fileGenerator of writeReadTestFileGenerators) {
     // fileGenerator.emit()
     console.warn(`NOT EMITTING: ${fileGenerator.name}`)
+}
+
+const generator = new TypedValueGenerator()
+for (const message of messages) {
+    console.log(JSON.stringify(generator.nextMessage(message), null, 2))
 }

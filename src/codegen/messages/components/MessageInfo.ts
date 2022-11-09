@@ -1,7 +1,7 @@
 import { IMessageFormat } from '../import/formats.ts'
 import { TypeInfo } from './TypeInfo.ts'
 
-interface IMessageProperty {
+export interface IMessageProperty {
     name: string
     typeInfo: TypeInfo
     definition: string

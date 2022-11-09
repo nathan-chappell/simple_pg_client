@@ -5,11 +5,7 @@ import { ITypedValue, MessageWriterAdapter } from './messageWriterAdapter.ts'
 import { WriteReadTester } from '../streams/WriteReadTester.ts'
 
 Deno.test('write/read __MESSAGE_TYPE__', async () => {
-    const message: ITypedValue[] = [
-        { name: 'messageType', type: 'Char', value: 'Z' },
-        { name: 'length', type: 'Int32', value: 6 },
-        { name: 'status', type: 'Char', value: '_' },
-    ]
+    const message: ITypedValue[] = __EXPECTED_TYPED_VALUES__
     const expectedRead = Object.fromEntries(message.map(v => [v.name, v.value])) as Record<string, unknown>
 
     const writeReadTester = new WriteReadTester()

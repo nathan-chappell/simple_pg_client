@@ -1,28 +1,16 @@
 import { Byte } from './builtinTypes.generated.ts'
-
-type NumberType = 'Byte' | 'Int8' | 'Int16' | 'Int32'
-type StringType = 'String' | 'Char'
-
-export interface ITypedNumberValue {
-    name?: string
-    type: NumberType
-    value: number
-}
-
-export interface ITypedStringValue {
-    name?: string
-    type: StringType
-    value: string
-}
-
-export interface ITypedValueArray {
-    name?: string
-    sizeType: 'Int16' | 'Int32'
-    value: ITypedNumberValue[] | ITypedStringValue[] | ITypedValueArray[]
-}
-
-export type ITypedValue = ITypedNumberValue | ITypedStringValue
-//   | ITypedValueArray;
+import {
+    isByte4Type,
+    isITypedByte4Value,
+    isITypedNumberValue,
+    isITypedStringValue,
+    isITypedValueArray,
+    isNumberType,
+    isStringType,
+    ITypedNumberValue,
+    ITypedStringValue,
+    ITypedValue,
+} from './ITypedValue.ts'
 
 const l8 = (x: number) => x % 256
 const b0 = (x: number) => l8(x >> (8 * 3))
@@ -31,20 +19,30 @@ const b2 = (x: number) => l8(x >> (8 * 1))
 const b3 = (x: number) => l8(x >> (8 * 0))
 
 export const toByteArray: (tv: ITypedValue) => Byte[] = tv => {
-    // prettier-ignore
-    switch (tv.type) {
-    case "Int8":
-      return [b3].map((b) => b(tv.value));
-    case "Int16":
-      return [b2, b3].map((b) => b(tv.value));
-    case "Int32":
-      return [b0, b1, b2, b3].map((b) => b(tv.value));
-    case "Char":
-    case "String":
-      return [...tv.value].map((c) => c.charCodeAt(0));
-    default:
-      throw new Error(`[toByteArray] couldn't byteify ${JSON.stringify(tv)}`);
-  }
+    if (isITypedValueArray(tv)) {
+        return [
+            toByteArray({ type: tv.sizeType, value: tv.value.length }),
+            ...tv.value.map(toByteArray).flat(),
+        ].flat()
+    } else if (isITypedByte4Value(tv)) {
+        return tv.value
+    } else if (isITypedNumberValue(tv) || isITypedStringValue(tv)) {
+        switch (tv.type) {
+            case 'Int8':
+                return [b3].map(b => b(tv.value))
+            case 'Int16':
+                return [b2, b3].map(b => b(tv.value))
+            case 'Int32':
+                return [b0, b1, b2, b3].map(b => b(tv.value))
+            case 'Char':
+            case 'String':
+                return [...tv.value].map(c => c.charCodeAt(0))
+            default:
+                throw new Error(`[toByteArray] couldn't byteify ${JSON.stringify(tv)}`)
+        }
+    } else {
+        throw new Error(`[toByteArray] couldn't byteify ${JSON.stringify(tv)}`)
+    }
 }
 
 export class MessageWriterAdapter {
@@ -64,7 +62,7 @@ export class MessageWriterAdapter {
             throw new Error(`[MessageWriterAdapter.writeMessage] all messages must have a "length" value`)
         }
 
-        const lengthType = message[lengthIndex].type
+        const lengthType = (message[lengthIndex] as ITypedNumberValue).type
         if (lengthType !== 'Int32') {
             throw new Error(`[MessageWriterAdapter.writeMessage] only length types of Int32 are expected`)
         }

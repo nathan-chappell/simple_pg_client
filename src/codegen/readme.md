@@ -60,6 +60,8 @@ compiler.writeLine(xVariable).write(xVariable.with(decl: null, value: 1))
 /// x = 1
 ```
 
+**NOTE** The one oddity of this "pattern" is that often you will call `.with` immediately after constructing a *Component.*  Let's just call it *idiomatic* for the configurable components.
+
 ## Nature of Components
 
 While components tend to be directly related to a syntactic fragment of the javascript language, it would be a mistake to consider them as such.  These entities arise in a bottom-up fashion from the requirements of the generators we are using.  We aren't trying to build a complete or conforming javascript AST - we want the "minimal" functionality required to generate our code in a comfortable manner.  Reusability, generality, and convenience are often in competition with one another - when in doubt about an implementation or abstraction you'd like to create, ask yourself the following two questions:

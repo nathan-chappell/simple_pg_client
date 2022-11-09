@@ -18,11 +18,10 @@ export class ParseResult implements IWriter {
         if (!this.typeInfo.isArray) {
             return compiler.write(this.result.with({ value: `await parse${itemType}(adapter)` }))
         } else {
-            const sizeTypeInfo = TypeInfo.fromRawType(sizeTypes[sizeTypes.length - 1])
+            const sizeTypeInfo = this.typeInfo.sizeTypeInfo
             const sizeVar = new Variable(varName('size'), sizeTypeInfo.tsType).with({ decl: 'const' })
             // prettier-ignore
-            const innerItemArrayPart = sizeTypes.slice(0,-1).map(t => `[${t}]`).join('')
-            const innerItemTypeInfo = TypeInfo.fromRawType(`${itemType}${innerItemArrayPart}`)
+            const innerItemTypeInfo = this.typeInfo.innerArrayTypeInfo
             const innerItemVar = new Variable(varName('result'), innerItemTypeInfo.tsType).with({
                 decl: 'const',
             })
