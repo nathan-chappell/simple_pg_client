@@ -1,27 +1,21 @@
-import { CompilerCallback, ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { Block } from '../structures/Block.ts'
-import { IStructure } from '../structures/IStructure.ts'
-import { Configurable } from '../Configurable.ts'
+import { ITextCompiler } from '../compilers/ITextCompiler.ts'
+import { Block } from './Block.ts'
 import { varName } from '../utils.ts'
-import { IComponent } from './IComponent.ts'
 import { Variable } from './Variable.ts'
+import { WithBody } from './WithBody.ts'
 
-export class ForRange extends Configurable implements IComponent, IStructure {
+export class ForRange extends WithBody {
     constructor(public max: string | number) {
-        super({})
-    }
-
-    build(compiler: ITextCompiler, ...callbacks: CompilerCallback[]): ITextCompiler {
-        return compiler.embed(this).build(new Block(), ...callbacks)
+        super({
+            body: null,
+        })
     }
 
     write(compiler: ITextCompiler): ITextCompiler {
+        // this._checkBody()
         const loopVar = new Variable(varName(), 'number').with({ value: '0' })
         return compiler
-            .write('for (')
-            .embed(loopVar)
-            .write('; ')
-            .write(loopVar.name, ' < ', `${this.max}; `)
-            .write('++', loopVar.name, ') ')
+            .write('for (', loopVar, '; ', loopVar.name, ' < ', `${this.max}; `, '++', loopVar.name, ') ')
+            .writeIf(this.options.body !== null, new Block().with({ body: this.options.body! }))
     }
 }

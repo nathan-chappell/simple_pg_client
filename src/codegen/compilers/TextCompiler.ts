@@ -1,6 +1,5 @@
-import { CompilerCallback, ITextCompiler } from '../compilers/ITextCompiler.ts'
+import { CompilerCallback, isCompilerCallback, isICompiler, isIComponent, ITextCompiler, Writable } from '../compilers/ITextCompiler.ts'
 import { IComponent } from '../components/IComponent.ts'
-import { IStructure } from '../structures/IStructure.ts'
 import { Line } from './Line.ts'
 
 export class TextCompiler implements ITextCompiler {
@@ -58,34 +57,39 @@ export class TextCompiler implements ITextCompiler {
         return this
     }
 
-    write(...content: string[]): TextCompiler {
-        this._lastLine.line += content.join('')
+    _append(text: string) {
+        this._lastLine.line += text
+    }
+
+    write(...content: Writable[]): TextCompiler {
+        for (const item of content) {
+            if (typeof item === 'string') {
+                this._append(item)
+            } else if (isIComponent(item)) {
+                item.write(this)
+            } else if (isCompilerCallback(item)) {
+                item(this)
+            } else if (isICompiler(item)) {
+                this.write(item.compile())
+            }
+        }
         return this
     }
 
-    writeIf(condition: boolean | undefined, ...content: string[]): TextCompiler {
+    writeIf(condition: boolean | undefined, ...content: Writable[]): TextCompiler {
         if (condition) this.write(...content)
         return this
     }
 
-    writeLine(...content: string[]): TextCompiler {
+    writeLine(...content: Writable[]): TextCompiler {
         this.write(...content)
         this.newLine()
         return this
     }
 
-    writeLineIf(condition: boolean, ...content: string[]): TextCompiler {
+    writeLineIf(condition: boolean, ...content: Writable[]): TextCompiler {
         if (condition) this.writeLine(...content)
         return this
-    }
-
-    embed(...components: IComponent[]): TextCompiler {
-        for (const component of components) component.write(this).writeLineIf(components.length > 1)
-        return this
-    }
-
-    build(structure: IStructure, ...callbacks: CompilerCallback[]): TextCompiler {
-        return structure.build(this, ...callbacks) as TextCompiler
     }
 
     compile(): string {

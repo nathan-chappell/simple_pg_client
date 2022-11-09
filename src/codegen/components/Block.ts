@@ -1,7 +1,7 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { StructureWithBody } from './StructureWithBody.ts'
+import { WithBody } from './WithBody.ts'
 
-export class Block extends StructureWithBody {
+export class Block extends WithBody {
     constructor() {
         super({
             body: null,

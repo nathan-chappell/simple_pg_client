@@ -1,19 +1,18 @@
-import { CompilerCallback, ITextCompiler } from '../compilers/ITextCompiler.ts'
+import { CompilerCallback, ITextCompiler, Writable } from '../compilers/ITextCompiler.ts'
 import { IComponent } from '../components/IComponent.ts'
 import { Variable } from '../components/Variable.ts'
 import { Configurable } from '../Configurable.ts'
 import { Block } from './Block.ts'
-import { IStructure } from './IStructure.ts'
 
 export interface ConditionalClause {
     condition: Variable
-    body: CompilerCallback
+    body: Writable
 }
 
 export interface IfOptions {
-    body: CompilerCallback | null
+    body: Writable | null
     elseIf_: ConditionalClause[] | null
-    else_: CompilerCallback | null
+    else_: Writable | null
 }
 
 export class If_ extends Configurable<IfOptions> implements IStructure, IComponent {

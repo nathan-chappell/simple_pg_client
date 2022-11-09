@@ -1,7 +1,7 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { StructureWithBody } from './StructureWithBody.ts'
+import { WithBody } from './WithBody.ts'
 
-export class Region extends StructureWithBody {
+export class Region extends WithBody {
     constructor(public name: string) {
         super({
             body: null,

@@ -1,6 +1,5 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 
-export interface IComponent<TOptions = Record<never, never>> {
+export interface IComponent {
     write(compiler: ITextCompiler): ITextCompiler
-    with(options: Partial<TOptions>): this
 }

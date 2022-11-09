@@ -1,14 +1,11 @@
 import { CompilerCallback, ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { Block } from '../structures/Block.ts'
-import { IStructure } from '../structures/IStructure.ts'
-import { Configurable } from '../Configurable.ts'
-import { IComponent } from './IComponent.ts'
+import { Block } from './Block.ts'
 import { ParameterList } from './ParameterList.ts'
 import { ParameterOptions } from './Parameter.ts'
 import { MultiCallback } from './MultiCallback.ts'
-import { OptionsWithBody, StructureWithBody } from '../structures/StructureWithBody.ts'
+import { WithBodyOptions, WithBody } from './WithBody.ts'
 
-export interface FunctionOptions extends OptionsWithBody {
+export interface FunctionOptions extends WithBodyOptions {
     arrow_: boolean
     async_: boolean
     const_: boolean
@@ -16,10 +13,7 @@ export interface FunctionOptions extends OptionsWithBody {
     expressionBody_: boolean
 }
 
-export class Function_
-    // extends Configurable<FunctionOptions>
-    extends StructureWithBody<FunctionOptions>
-    implements IComponent<FunctionOptions>, IStructure
+export class Function_ extends WithBody<FunctionOptions>
 {
     constructor(
         public name: string,
