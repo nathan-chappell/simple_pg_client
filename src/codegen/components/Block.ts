@@ -1,15 +1,24 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { WithBody } from './WithBody.ts'
+import { TComponent } from '../compilers/TComponent.ts'
+import { Configurable } from '../Configurable.ts'
+import { IWriter } from './IWriter.ts'
 
-export class Block extends WithBody {
-    constructor() {
+export interface BlockOptions {
+    singleLine: boolean
+}
+
+export class Block extends Configurable<BlockOptions> implements IWriter {
+    constructor(public body: TComponent) {
         super({
-            body: null,
+            singleLine: false,
         })
     }
 
     write(compiler: ITextCompiler): ITextCompiler {
-        this._checkBody()
-        return compiler.writeLine('{').withIndent(1, this.options.body!).write('}')
+        if (this.options.singleLine) {
+            return compiler.write('{ ', this.body, ' }')
+        } else {
+            return compiler.write('{').withIndent(1, this.body).write('}')
+        }
     }
 }

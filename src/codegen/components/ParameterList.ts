@@ -1,33 +1,31 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Configurable } from '../Configurable.ts'
-import { IComponent } from './IComponent.ts'
+import { IWriter } from './IWriter.ts'
 import { Parameter, ParameterOptions } from './Parameter.ts'
 
 export interface ParameterListOptions {
     multiline: boolean
-    parameterOptions: ParameterOptions
+    parameterOptions: Partial<ParameterOptions>
 }
 
-export class ParameterList extends Configurable<ParameterListOptions> implements IComponent {
+export class ParameterList extends Configurable<ParameterListOptions> implements IWriter {
     constructor(public parameters: Parameter[]) {
         super({
             multiline: false,
-            parameterOptions: {
-                withDefault: false,
-                withType: false,
-                hyphenPrefix: false,
-            },
+            parameterOptions: {},
         })
     }
 
     write(compiler: ITextCompiler): ITextCompiler {
+        compiler.write('(')
         const body = () => {
-            compiler.write('(')
             for (let i = 0; i < this.parameters.length; ++i) {
-                compiler
-                    .embed(this.parameters[i].with(this.options.parameterOptions))
-                    .writeIf(!this.options.multiline && i < this.parameters.length - 1, ', ')
-                    .writeLineIf(this.options.multiline, ',')
+                compiler.write(this.parameters[i].with(this.options.parameterOptions))
+                if (this.options.multiline) {
+                    compiler.writeLine(',')
+                } else if (i < this.parameters.length - 1) {
+                    compiler.write(', ')
+                }
             }
             return compiler.write(')')
         }

@@ -1,6 +1,6 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Configurable } from '../Configurable.ts'
-import { IComponent } from './IComponent.ts'
+import { IWriter } from './IWriter.ts'
 
 export interface ParameterOptions {
     withType: boolean
@@ -8,7 +8,7 @@ export interface ParameterOptions {
     hyphenPrefix: boolean
 }
 
-export class Parameter extends Configurable<ParameterOptions> implements IComponent {
+export class Parameter extends Configurable<ParameterOptions> implements IWriter {
     constructor(public name: string, public type: string, public default_: string | null = null) {
         super({
             withDefault: false,

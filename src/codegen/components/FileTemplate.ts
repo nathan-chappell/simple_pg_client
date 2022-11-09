@@ -1,6 +1,6 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Configurable } from '../Configurable.ts'
-import { IComponent } from './IComponent.ts'
+import { IWriter } from './IWriter.ts'
 import { Dependencies } from '../Dependencies.ts'
 import { ICompiler } from '../compilers/ICompiler.ts'
 
@@ -8,7 +8,7 @@ export interface FileTemplateOptions {
     replacements: Record<string, string>
 }
 
-export class FileTemplate extends Configurable<FileTemplateOptions> implements IComponent, ICompiler {
+export class FileTemplate extends Configurable<FileTemplateOptions> implements IWriter, ICompiler {
     template: string
 
     constructor(public name: string, public templateDirectory: string) {

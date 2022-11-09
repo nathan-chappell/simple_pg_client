@@ -1,21 +1,19 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { WithBody } from './WithBody.ts'
+import { TComponent } from '../compilers/TComponent.ts'
+import { EmptyLine } from './EmptyLine.ts'
+import { IWriter } from './IWriter.ts'
 
-export class Region extends WithBody {
-    constructor(public name: string) {
-        super({
-            body: null,
-        })
-    }
+export class Region implements IWriter {
+    constructor(public name: string, public body: TComponent) {}
 
     write(compiler: ITextCompiler): ITextCompiler {
-        this._checkBody()
-        return compiler
-            .newLine()
-            .writeLine('//#region ', this.name)
-            .newLine()
-            .embed(this.options.body!)
-            .newLine()
-            .writeLine('//#endregion')
+        return compiler.writeLines(
+            new EmptyLine(0),
+            `//#region ${this.name}`,
+            new EmptyLine(0),
+            this.body,
+            new EmptyLine(0),
+            '//#endregion',
+        )
     }
 }

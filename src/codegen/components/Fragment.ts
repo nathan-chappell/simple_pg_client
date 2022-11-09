@@ -1,12 +1,12 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Configurable } from '../Configurable.ts'
-import { IComponent } from './IComponent.ts'
+import { IWriter } from './IWriter.ts'
 
 export interface FragmentOptions {
     newLine: boolean
 }
 
-export class Fragment extends Configurable<FragmentOptions> implements IComponent {
+export class Fragment extends Configurable<FragmentOptions> implements IWriter {
     constructor(public text: string) {
         super({
             newLine: false,

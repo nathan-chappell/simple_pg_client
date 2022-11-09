@@ -1,4 +1,4 @@
-import { IComponent } from '../components/IComponent.ts'
+import { IWriter } from '../components/IWriter.ts'
 import { Configurable } from '../Configurable.ts'
 import { stringToLines } from '../utils.ts'
 import { ITextCompiler } from './ITextCompiler.ts'
@@ -9,8 +9,8 @@ export interface AlignedTableOptions {
     prefixes: string[]
 }
 
-export class AlignedTable extends Configurable<AlignedTableOptions> implements IComponent {
-    constructor(public compiler: ITextCompiler, public columnWidths: number[]) {
+export class AlignedTable extends Configurable<AlignedTableOptions> implements IWriter {
+    constructor(public columnWidths: number[]) {
         super({
             startAlignment: null,
             rows: [],

@@ -1,7 +1,7 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Configurable } from '../Configurable.ts'
 import { stringToLines } from '../utils.ts'
-import { IComponent } from './IComponent.ts'
+import { IWriter } from './IWriter.ts'
 
 export interface CommentOptions {
     lineTargetLength: number
@@ -9,7 +9,7 @@ export interface CommentOptions {
     indent: number
 }
 
-export class Comment extends Configurable<CommentOptions> implements IComponent {
+export class Comment extends Configurable<CommentOptions> implements IWriter {
     constructor(public remarks: string[]) {
         super({
             lineTargetLength: 80,

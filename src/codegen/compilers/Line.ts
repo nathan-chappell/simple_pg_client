@@ -14,6 +14,7 @@ export class Line implements ICompiler {
 
     indent_(s: string) {
         return ' '.repeat(this._spacesPerIndent * this.indent) + s
+        // return `/* ${this.indent} */` + ' '.repeat(this._spacesPerIndent * this.indent) + s
     }
 
     compile(): string {

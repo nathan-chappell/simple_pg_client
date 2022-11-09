@@ -1,23 +1,24 @@
-import { CompilerCallback, ITextCompiler } from '../compilers/ITextCompiler.ts'
+import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Block } from './Block.ts'
 import { ParameterList } from './ParameterList.ts'
 import { ParameterOptions } from './Parameter.ts'
-import { MultiCallback } from './MultiCallback.ts'
-import { WithBodyOptions, WithBody } from './WithBody.ts'
+import { TComponent } from '../compilers/TComponent.ts'
+import { Configurable } from '../Configurable.ts'
+import { IWriter } from './IWriter.ts'
 
-export interface FunctionOptions extends WithBodyOptions {
+export interface FunctionOptions {
     arrow_: boolean
     async_: boolean
     const_: boolean
     export_: boolean
-    expressionBody_: boolean
+    bodyType: null | 'expression' | 'block'
 }
 
-export class Function_ extends WithBody<FunctionOptions>
-{
+export class Function_ extends Configurable<FunctionOptions> implements IWriter {
     constructor(
         public name: string,
         public parameterList: ParameterList,
+        public body: TComponent | null,
         public returnType: string | null = null,
     ) {
         super({
@@ -25,49 +26,49 @@ export class Function_ extends WithBody<FunctionOptions>
             async_: false,
             const_: false,
             export_: false,
-            expressionBody_: false,
-            body: null,
+            bodyType: null,
         })
     }
 
-    _params(parameterOptions: ParameterOptions) {
+    _params(parameterOptions: Partial<ParameterOptions>) {
         return this.parameterList.with({ parameterOptions })
     }
 
     write(compiler: ITextCompiler): ITextCompiler {
-        if (this.options.body !== null)
-            return this.with({ body: null }).build(compiler, () => this.options.body!(compiler))
+        if (this.options.bodyType !== null && this.body === null)
+            throw new Error(
+                `No body provided to function.  Use .with({bodyType: null}) to write a declaration.`,
+            )
+
+        // declaration
         if (this.options.export_) compiler.write('export ')
         if (this.options.arrow_) {
             compiler.writeIf(this.options.const_, 'const ').write(this.name)
             if (this.returnType !== null) {
                 compiler
-                    .write(': ')
-                    .embed(this._params({ withType: true, withDefault: false, hyphenPrefix: false }))
+                    .write(': ', this._params({ withType: true, withDefault: false }))
                     .write(' => ', this.returnType)
             }
         } else {
             compiler
                 .writeIf(!!this.options.async_, 'async ')
-                .write('function ', this.name)
-                .embed(this._params({ withType: true, withDefault: true, hyphenPrefix: false }))
+                .write('function ', this.name, this._params({ withType: true, withDefault: true }))
                 .writeIf(this.returnType !== null, ': ', this.returnType!)
         }
-        return compiler
-    }
 
-    build(compiler: ITextCompiler, ...callbacks: CompilerCallback[]): ITextCompiler {
-        console.debug(`building ${this.name}`)
-        const body = new MultiCallback(...callbacks)
-        compiler.embed(this).write(' ')
-        if (this.options.arrow_) {
-            compiler
-                .write('= ')
-                .writeIf(!!this.options.async_, 'async ')
-                .embed(this._params({ withType: false, withDefault: true, hyphenPrefix: false }))
-                .write(' => ')
-            if (this.options.expressionBody_) return compiler.embed(body)
+        // body
+        if (this.options.bodyType !== null) {
+            compiler.write(' ')
+            if (this.options.arrow_) {
+                compiler
+                    .write('= ')
+                    .writeIf(!!this.options.async_, 'async ')
+                    .write(this._params({ withType: false, withDefault: true }))
+                    .write(' => ')
+            }
+            if (this.options.arrow_ && this.options.bodyType === 'expression') compiler.write(this.body!)
+            else compiler.write(new Block(this.body!))
         }
-        return compiler.build(new Block().with({ body }))
+        return compiler
     }
 }

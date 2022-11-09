@@ -1,22 +1,27 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
-import { Block } from '../structures/Block.ts'
 import { Configurable } from '../Configurable.ts'
-import { IComponent } from './IComponent.ts'
+import { Block } from './Block.ts'
+import { IWriter } from './IWriter.ts'
 
-export class Import extends Configurable<Record<never, never>> implements IComponent {
+export interface ImportOptions {
+    singleLine: boolean
+}
+
+export class Import extends Configurable<ImportOptions> implements IWriter {
     constructor(public names: string[], public from: string) {
-        super({})
+        super({
+            singleLine: false,
+        })
     }
 
     write(compiler: ITextCompiler): ITextCompiler {
         compiler.write('import ')
-        if (this.names.length == 1) {
-            compiler.write('{ ', this.names[0], ' }')
-        } else {
-            compiler.build(new Block(), () => {
-                for (const name of this.names) compiler.writeLine(name, ',')
-            })
-        }
-        return compiler.writeLine(" from '", this.from, "'")
+        const body = (_compiler: ITextCompiler) =>
+            this.options.singleLine
+                ? _compiler.write(...this.names.join(','))
+                : _compiler.writeLines(...this.names.map(n => `${n},`))
+        return compiler
+            .write(new Block(body).with({ singleLine: this.options.singleLine }))
+            .writeLine(" from '", this.from, "'")
     }
 }

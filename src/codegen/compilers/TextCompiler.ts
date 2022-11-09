@@ -1,5 +1,6 @@
-import { CompilerCallback, isCompilerCallback, isICompiler, isIComponent, ITextCompiler, Writable } from '../compilers/ITextCompiler.ts'
-import { IComponent } from '../components/IComponent.ts'
+import { ITextCompiler } from '../compilers/ITextCompiler.ts'
+import { IWriter } from '../components/IWriter.ts'
+import { isCompilerCallback, isICompiler, isIComponent, TComponent } from './TComponent.ts'
 import { Line } from './Line.ts'
 
 export class TextCompiler implements ITextCompiler {
@@ -33,8 +34,13 @@ export class TextCompiler implements ITextCompiler {
         return typeof column === 'number' ? this.align(column) : this
     }
 
+    _newLineIfNotEmpty(): TextCompiler {
+        return this._lastLine.line === '' ? this : this.newLine()
+    }
+
     indent(n = 1): TextCompiler {
         this._indent += n
+        this._newLineIfNotEmpty()
         this._lastLine.indent = this._indent
         return this
     }
@@ -44,12 +50,13 @@ export class TextCompiler implements ITextCompiler {
             throw new Error('Tried to dedent past 0')
         }
         this._indent -= n
+        this._newLineIfNotEmpty()
         this._lastLine.indent = this._indent
         return this
     }
 
-    withIndent(n: number, component: IComponent): TextCompiler {
-        return this.indent(n).embed(component).dedent(n)
+    withIndent(n: number, component: IWriter): TextCompiler {
+        return this.indent(n).write(component).dedent(n)
     }
 
     newLine(n = 1): TextCompiler {
@@ -61,34 +68,37 @@ export class TextCompiler implements ITextCompiler {
         this._lastLine.line += text
     }
 
-    write(...content: Writable[]): TextCompiler {
-        for (const item of content) {
-            if (typeof item === 'string') {
-                this._append(item)
-            } else if (isIComponent(item)) {
-                item.write(this)
-            } else if (isCompilerCallback(item)) {
-                item(this)
-            } else if (isICompiler(item)) {
-                this.write(item.compile())
+    write(...components: TComponent[]): TextCompiler {
+        for (const component of components) {
+            if (typeof component === 'string') {
+                this._append(component)
+            } else if (isIComponent(component)) {
+                component.write(this)
+            } else if (isCompilerCallback(component)) {
+                component(this)
+            } else if (isICompiler(component)) {
+                this.write(component.compile())
             }
         }
         return this
     }
 
-    writeIf(condition: boolean | undefined, ...content: Writable[]): TextCompiler {
-        if (condition) this.write(...content)
+    writeIf(condition: boolean | undefined, ...components: TComponent[]): TextCompiler {
+        if (condition) this.write(...components)
         return this
     }
 
-    writeLine(...content: Writable[]): TextCompiler {
-        this.write(...content)
-        this.newLine()
+    writeLine(...components: TComponent[]): TextCompiler {
+        return this.write(...components).newLine()
+    }
+
+    writeLines(...components: TComponent[]): TextCompiler {
+        for (const component of components) this.writeLine(component)
         return this
     }
 
-    writeLineIf(condition: boolean, ...content: Writable[]): TextCompiler {
-        if (condition) this.writeLine(...content)
+    writeLineIf(condition: boolean, ...components: TComponent[]): TextCompiler {
+        if (condition) this.writeLine(...components)
         return this
     }
 

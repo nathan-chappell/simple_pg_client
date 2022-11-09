@@ -2,20 +2,28 @@ import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Block } from './Block.ts'
 import { varName } from '../utils.ts'
 import { Variable } from './Variable.ts'
-import { WithBody } from './WithBody.ts'
+import { TComponent } from '../compilers/TComponent.ts'
+import { Configurable } from '../Configurable.ts'
+import { IWriter } from './IWriter.ts'
 
-export class ForRange extends WithBody {
-    constructor(public max: string | number) {
+export interface ForRangeOptions {
+    inBlock: boolean
+}
+
+export class ForRange extends Configurable<ForRangeOptions> implements IWriter {
+    constructor(public max: TComponent, public body: TComponent) {
         super({
-            body: null,
+            inBlock: true,
         })
     }
 
     write(compiler: ITextCompiler): ITextCompiler {
         // this._checkBody()
         const loopVar = new Variable(varName(), 'number').with({ value: '0' })
-        return compiler
-            .write('for (', loopVar, '; ', loopVar.name, ' < ', `${this.max}; `, '++', loopVar.name, ') ')
-            .writeIf(this.options.body !== null, new Block().with({ body: this.options.body! }))
+        compiler
+            .write('for (', loopVar, '; ')
+            .write(loopVar.name, ' < ', `${this.max}; `)
+            .write('++', loopVar.name, ') ')
+        return this.options.inBlock ? compiler.write(new Block(this.body)) : compiler.withIndent(1, this.body)
     }
 }

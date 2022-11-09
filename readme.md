@@ -10,7 +10,7 @@ A minimal client for postgres completely written in typescript
 * no dependencies
 
 ## Design Goals
-* maximal use of code-generation
+* maximal use of code-generation (look [here](./src/codegen/readme.md) for an overview)
 * tests!
 
 ## Remarks
@@ -27,8 +27,6 @@ A minimal client for postgres completely written in typescript
 ### Tasks
 
 1. Write some tests
-    * Write/Read to Transformer (identity transform) - you should read exactly what you write
-    * Hand-jam a few
     * Generalize and implement generation (if feasible)
 2. Protocol
     * declarative

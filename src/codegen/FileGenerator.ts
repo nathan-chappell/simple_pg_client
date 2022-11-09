@@ -1,11 +1,10 @@
-import { CompilerCallback, ITextCompiler } from './compilers/ITextCompiler.ts'
+import { ITextCompiler } from './compilers/ITextCompiler.ts'
 import { TextCompiler } from './compilers/TextCompiler.ts'
+import { TComponent } from './compilers/TComponent.ts'
 
 import { Comment } from './components/Comment.ts'
-import { IComponent } from './components/IComponent.ts'
+import { IWriter } from './components/IWriter.ts'
 import { Import } from './components/Import.ts'
-
-import { IStructure } from './structures/IStructure.ts'
 
 import { Configurable } from './Configurable.ts'
 import { Dependencies } from './Dependencies.ts'
@@ -16,31 +15,27 @@ export interface FileGeneratorOptions {
     generationWarning: string
     lintIgnores: string[]
     imports: Import[]
-    body: IComponent[]
+    components: TComponent[]
 }
 
-export class FileGenerator extends Configurable<FileGeneratorOptions> implements IComponent {
+export class FileGenerator extends Configurable<FileGeneratorOptions> implements IWriter {
     constructor(public name: string, public outputDirectory: string) {
         super({
             generationWarning: warning,
             lintIgnores: [],
             imports: [],
-            body: [],
+            components: [],
         })
     }
 
     write(compiler: ITextCompiler): ITextCompiler {
-        if (this.options.body.length === 0)
+        if (this.options.components.length === 0)
             throw new Error(`FileGenerator for (${this.outputPath}) has no body - this is likely an error`)
         return compiler
             .writeLine(this.options.generationWarning)
-            .newLine()
-            .embed(new Comment([`deno-lint-ignore-file ${this.options.lintIgnores.join(' ')}`]))
-            .newLine()
-            .embed(...this.options.imports)
-            .newLine()
-            .embed(...this.options.body)
-            .newLine()
+            .writeLine(new Comment([`deno-lint-ignore-file ${this.options.lintIgnores.join(' ')}`]))
+            .writeLines(...this.options.imports)
+            .writeLines(...this.options.components)
             .writeLine(this.options.generationWarning)
     }
 
@@ -48,9 +43,9 @@ export class FileGenerator extends Configurable<FileGeneratorOptions> implements
         return `${this.outputDirectory}/${this.name}.generated.ts`
     }
 
-    emit() {
+    emit(): void {
         console.log(`[FileGenerator.emit] Generating file ${this.outputPath} ...`)
-        const data = new TextCompiler().embed(this).compile()
+        const data = new TextCompiler().write(this).compile()
         Dependencies.writeTextFileSync(this.outputPath, data)
         console.log(`[FileGenerator.emit] complete`)
     }

@@ -1,6 +1,6 @@
 import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 import { Configurable } from '../Configurable.ts'
-import { IComponent } from './IComponent.ts'
+import { IWriter } from './IWriter.ts'
 import { Parameter } from './Parameter.ts'
 
 export interface VariableOptions {
@@ -11,7 +11,7 @@ export interface VariableOptions {
     typeAlignment: number | null
 }
 
-export class Variable extends Configurable<VariableOptions> implements IComponent {
+export class Variable extends Configurable<VariableOptions> implements IWriter {
     constructor(public name: string, public type: string) {
         super({
             decl: 'let',
