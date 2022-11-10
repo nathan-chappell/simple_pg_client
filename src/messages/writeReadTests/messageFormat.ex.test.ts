@@ -1,8 +1,9 @@
 import { assert, assertObjectMatch } from 'https://deno.land/std@0.162.0/testing/asserts.ts'
 import { DataTypeAdapter } from '../../streams/dataTypeAdapter.ts'
 import { isReadyForQuery, parseBackendMessage, ReadyForQuery } from './../messageFormats.generated.ts'
-import { ITypedValue, MessageWriterAdapter } from './../messageWriterAdapter.ts'
+import { MessageWriterAdapter } from './../messageWriterAdapter.ts'
 import { WriteReadTester } from '../../streams/WriteReadTester.ts'
+import { ITypedValue } from "../ITypedValue.ts";
 
 Deno.test('write/read ReadyForQuery', async () => {
     const message: ITypedValue[] = [

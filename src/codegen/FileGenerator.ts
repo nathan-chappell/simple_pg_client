@@ -40,7 +40,7 @@ export class FileGenerator extends Configurable<FileGeneratorOptions> implements
     }
 
     get outputPath(): string {
-        return `${this.outputDirectory}/${this.name}.generated.ts`
+        return `${this.outputDirectory}/${this.name}.ts`
     }
 
     emit(): void {

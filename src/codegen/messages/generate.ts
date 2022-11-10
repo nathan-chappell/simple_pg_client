@@ -12,10 +12,9 @@ import { TypeDef } from '../components/TypeDef.ts'
 
 import { Dependencies } from '../Dependencies.ts'
 import { FileGenerator } from '../FileGenerator.ts'
-import { ITypedValue } from '../../messages/messageWriterAdapter.ts'
 
 import { formats } from './import/formats.ts'
-import { TypedValueGenerator } from './components/sampleMessage.ts'
+import { TypedValueGenerator } from './components/TypedValueGenerator.ts'
 import { TypeInfo } from './components/TypeInfo.ts'
 
 //#region Deno API thunks
@@ -36,7 +35,7 @@ validateStartup()
 //#region globals
 
 const outputDirectory = './src/messages'
-const builtinsFileName = 'builtinTypes'
+const builtinsFileName = 'builtinTypes.generated'
 
 export type TBuiltinTypeInfo = { jsType: string; adapterType: string }
 
@@ -64,7 +63,7 @@ const imports_ = {
     // MessageWriterAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
     builtins: new Import(
         [...Object.keys(builtinTypes), ...Object.keys(builtinTypes).map(t => `parse${t}`)],
-        `./${builtinsFileName}.generated.ts`,
+        `./${builtinsFileName}.ts`,
     ),
 }
 
@@ -101,7 +100,7 @@ const messageFormatRegions = messages
     .filter(message => !message.info.extendsAuthentication)
     .map(message => new Region(message.info.name, message.subComponentWriter))
 
-const messageFormatFileGenerator = new FileGenerator('messageFormats', outputDirectory).with({
+const messageFormatFileGenerator = new FileGenerator('messageFormats.generated', outputDirectory).with({
     lintIgnores: ['no-inferrable-types', 'require-await'],
     imports: Object.values(imports_),
     components: [...messageFormatRegions, new Region('BackendParser', new BackendParser(messageInfos))],
@@ -111,17 +110,12 @@ const messageFormatFileGenerator = new FileGenerator('messageFormats', outputDir
 
 //#region write/read tests
 
-const writeReadTestTemplate = new FileTemplate('messageFormat.test', './src/codegen/messages/templates') // getTemplate('messageFormat.test')
-// const getSampleMessage: (message: Message) => ITypedValue[] = (message) => message.info.properties.map(p => ({
-//     name: p.name,
-//     type: p.typeInfo.tsType,
-//     value:
-// }))
+const writeReadTestTemplate = new FileTemplate('messageFormat.test', './src/codegen/messages/templates')
 
 const typedValueGenerator = new TypedValueGenerator()
 
 const makeWriteReadTestFileGenerator: (message: Message) => FileGenerator = message =>
-    new FileGenerator(`writeReadTest.${message.info.name}.test`, `${outputDirectory}/tests`).with({
+    new FileGenerator(`writeReadTest.${message.info.name}.generated.test`, `${outputDirectory}/tests`).with({
         components: [
             writeReadTestTemplate.with({
                 replacements: {
@@ -133,7 +127,16 @@ const makeWriteReadTestFileGenerator: (message: Message) => FileGenerator = mess
     })
 
 const writeReadTestFileGenerators = messages
-    .filter(message => message.shouldCreateGuard)
+    .filter(
+        message =>
+            !message.info.extendsAuthentication &&
+            !message.info.isSSL &&
+            !message.info.isInternal &&
+            !message.info.isStartup &&
+            message.info.extendsIBackendMessage &&
+            message.info.name !== 'CancelRequest' &&
+            message.info.name !== 'RowDescription',
+    )
     .map(makeWriteReadTestFileGenerator)
 
 //#endregion
@@ -141,11 +144,11 @@ const writeReadTestFileGenerators = messages
 builtinsFileGenerator.emit()
 messageFormatFileGenerator.emit()
 for (const fileGenerator of writeReadTestFileGenerators) {
-    // fileGenerator.emit()
-    console.warn(`NOT EMITTING: ${fileGenerator.name}`)
+    fileGenerator.emit()
+    // console.warn(`NOT EMITTING: ${fileGenerator.name}`)
 }
 
-const generator = new TypedValueGenerator()
-for (const message of messages) {
-    console.log(JSON.stringify(generator.nextMessage(message), null, 2))
-}
+// const generator = new TypedValueGenerator()
+// for (const message of messages) {
+//     console.log(JSON.stringify(generator.nextMessage(message), null, 2))
+// }

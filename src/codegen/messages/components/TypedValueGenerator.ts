@@ -1,8 +1,8 @@
 import {
     isNumberType,
     isStringType,
-    ITypedValue,
-    ITypedValueArray,
+    TypedValue,
+    ITypedArrayValue,
     NumberType,
     StringType,
 } from '../../../messages/ITypedValue.ts'
@@ -76,7 +76,7 @@ export class TypedValueGenerator {
         }
     }
 
-    nextTypedValue(typeInfo: TypeInfo): ITypedValue | ITypedValue[] {
+    nextTypedValue(typeInfo: TypeInfo): TypedValue | TypedValue[] {
         if (typeInfo.with({ optional: false }).tsType === 'Byte4') {
             return { type: 'Byte4', value: [...Array(4)].map(_ => this._nextSimpleValue('Int8')) }
         } else if (!typeInfo.isArray) {
@@ -89,9 +89,17 @@ export class TypedValueGenerator {
             const type = typeInfo.typeValueType
 
             if (isNumberType(type)) {
-                return { type, value: this._nextSimpleValue(type) }
+                if (typeInfo.options.expected !== null) {
+                    return { type, value: parseInt(typeInfo.options.expected) } as TypedValue
+                } else {
+                    return { type, value: this._nextSimpleValue(type) }
+                }
             } else if (isStringType(type)) {
-                return { type, value: this._nextSimpleValue(type) }
+                if (typeInfo.options.expected !== null) {
+                    return { type, value: typeInfo.options.expected[1] } as TypedValue
+                } else {
+                    return { type, value: this._nextSimpleValue(type) }
+                }
             } else {
                 throw new Error(`Invalid overload: ${type}`)
             }
@@ -104,11 +112,11 @@ export class TypedValueGenerator {
             return {
                 sizeType: sizeTypeInfo.tsType,
                 value: [...Array(3)].map(_ => this.nextTypedValue(innerArrayTypeInfo)),
-            } as ITypedValueArray
+            } as ITypedArrayValue
         }
     }
 
-    nextMessage(message: Message): ITypedValue[] {
+    nextMessage(message: Message): TypedValue[] {
         return message.info.properties.map(p => ({ ...this.nextTypedValue(p.typeInfo), name: p.name })).flat()
     }
 }
