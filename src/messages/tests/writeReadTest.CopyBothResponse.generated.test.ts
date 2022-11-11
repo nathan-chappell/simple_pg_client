@@ -5,21 +5,13 @@ import { assert, assertObjectMatch } from 'https://deno.land/std@0.162.0/testing
 import { DataTypeAdapter } from '../../streams/dataTypeAdapter.ts'
 import { isCopyBothResponse, parseBackendMessage, CopyBothResponse } from '../messageFormats.generated.ts'
 import { MessageWriterAdapter } from '../messageWriterAdapter.ts'
-import { ITypedValue } from '../ITypedValue.ts'
+import { NamedTypedValue } from '../ITypedValue.ts'
 import { WriteReadTester } from '../../streams/WriteReadTester.ts'
-
-const _expected = (o: object[]) => {
-    const result: { [k: string]: any } = {}
-    for (const [k, v] of Object.entries(o)) {
-        result[k] = Array.isArray(v) ? v.map(_expected) : [(v as Record<string,string>).name, (v as Record<string,string>).value]
-    }
-    return result
-}
+import { fromEntries } from '../fromEntries.ts'
 
 Deno.test('write/read CopyBothResponse', async () => {
-    const message: ITypedValue[] = [{"type":"Char","value":"W","name":"messageType"},{"type":"Int32","value":4125163520,"name":"length"},{"type":"Int8","value":21,"name":"isBinary"},{"sizeType":"Int16","value":[{"type":"Int16","value":41824},{"type":"Int16","value":13815},{"type":"Int16","value":32768}],"name":"formatCodes"}]
-    // const expectedRead = Object.fromEntries(message.map(v => [v.name, v.value])) as Record<string, unknown>
-    const expectedRead = _expected(message) as Record<string, unknown>
+    const message: NamedTypedValue[] = [{"type":"Char","value":"W","name":"messageType"},{"type":"Int32","value":4125163520,"name":"length"},{"type":"Int8","value":21,"name":"isBinary"},{"sizeType":"Int16","value":[{"type":"Int16","value":41824},{"type":"Int16","value":13815},{"type":"Int16","value":32768}],"name":"formatCodes"}]
+    const expectedRead = fromEntries(message) as Record<string, unknown>
 
     const writeReadTester = new WriteReadTester()
     let messageWriterAdapter: MessageWriterAdapter | null = null

@@ -1,32 +1,30 @@
-function isString(o: unknown): o is string {
+export type TypedValue<T = unknown> = { type: string; value: T }
+export type NamedValue<T = unknown> = { name: string } & TypedValue<T>
+export type O = string | number | { [name: string]: O } | Array<O>
+
+export function isString(o: unknown): o is string {
     return typeof o === 'string'
 }
 
-function isNumber(o: unknown): o is number {
+export function isNumber(o: unknown): o is number {
     return typeof o === 'number'
 }
 
-type TypedValue<T = unknown> = { type: string; value: T }
-
-function isTypedValue(o: Record<never, never> | TypedValue): o is TypedValue {
+export function isTypedValue(o: Record<never, never> | TypedValue): o is TypedValue {
     return 'type' in o && typeof o.type === 'string' && 'value' in o
 }
 
-type NamedValue<T = unknown> = { name: string } & TypedValue<T>
-
-function isNamedValue(o: Record<never, never> | NamedValue): o is NamedValue {
+export function isNamedValue(o: Record<never, never> | NamedValue): o is NamedValue {
     return isTypedValue(o) && 'name' in o && typeof o.name === 'string'
 }
 
-function isObjDef(o: Record<never, never>[] | NamedValue[]): o is NamedValue[] {
+export function isObjDef(o: Record<never, never>[] | NamedValue[]): o is NamedValue[] {
     return isNamedValue(o[0])
 }
 
-function isArrayDef(o: Record<never, never>[] | TypedValue[]): o is TypedValue[] {
+export function isArrayDef(o: Record<never, never>[] | TypedValue[]): o is TypedValue[] {
     return isTypedValue(o[0]) && !isNamedValue(o[0])
 }
-
-type O = string | number | { [name: string]: O } | Array<O>
 
 export function fromEntries(o: unknown): O {
     if (isString(o)) {

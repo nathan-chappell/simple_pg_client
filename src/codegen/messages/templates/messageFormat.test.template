@@ -7,7 +7,7 @@ import { WriteReadTester } from '../../streams/WriteReadTester.ts'
 import { fromEntries } from '../fromEntries.ts'
 
 Deno.test('write/read __MESSAGE_TYPE__', async () => {
-    const message: ITypedValue[] = __EXPECTED_TYPED_VALUES__
+    const message: NamedTypedValue[] = __EXPECTED_TYPED_VALUES__
     const expectedRead = fromEntries(message) as Record<string, unknown>
 
     const writeReadTester = new WriteReadTester()

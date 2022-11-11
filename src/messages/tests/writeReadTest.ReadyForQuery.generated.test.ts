@@ -5,21 +5,13 @@ import { assert, assertObjectMatch } from 'https://deno.land/std@0.162.0/testing
 import { DataTypeAdapter } from '../../streams/dataTypeAdapter.ts'
 import { isReadyForQuery, parseBackendMessage, ReadyForQuery } from '../messageFormats.generated.ts'
 import { MessageWriterAdapter } from '../messageWriterAdapter.ts'
-import { ITypedValue } from '../ITypedValue.ts'
+import { NamedTypedValue } from '../ITypedValue.ts'
 import { WriteReadTester } from '../../streams/WriteReadTester.ts'
-
-const _expected = (o: object[]) => {
-    const result: { [k: string]: any } = {}
-    for (const [k, v] of Object.entries(o)) {
-        result[k] = Array.isArray(v) ? v.map(_expected) : [(v as Record<string,string>).name, (v as Record<string,string>).value]
-    }
-    return result
-}
+import { fromEntries } from '../fromEntries.ts'
 
 Deno.test('write/read ReadyForQuery', async () => {
-    const message: ITypedValue[] = [{"type":"Char","value":"Z","name":"messageType"},{"type":"Int32","value":5,"name":"length"},{"type":"Char","value":"U","name":"status"}]
-    // const expectedRead = Object.fromEntries(message.map(v => [v.name, v.value])) as Record<string, unknown>
-    const expectedRead = _expected(message) as Record<string, unknown>
+    const message: NamedTypedValue[] = [{"type":"Char","value":"Z","name":"messageType"},{"type":"Int32","value":5,"name":"length"},{"type":"Char","value":"U","name":"status"}]
+    const expectedRead = fromEntries(message) as Record<string, unknown>
 
     const writeReadTester = new WriteReadTester()
     let messageWriterAdapter: MessageWriterAdapter | null = null
