@@ -5,13 +5,13 @@ import { assert, assertObjectMatch } from 'https://deno.land/std@0.162.0/testing
 import { DataTypeAdapter } from '../../streams/dataTypeAdapter.ts'
 import { isDataRow, parseBackendMessage, DataRow } from '../messageFormats.generated.ts'
 import { MessageWriterAdapter } from '../messageWriterAdapter.ts'
-import { TypedValue } from '../ITypedValue.ts'
+import { NamedTypedValue } from '../ITypedValue.ts'
 import { WriteReadTester } from '../../streams/WriteReadTester.ts'
+import { fromEntries } from '../fromEntries.ts'
 // import { INamedTypedValue } from "../../codegen/ITV.ts";
 
-
 Deno.test('write/read DataRow', async () => {
-    const message: TypedValue[] = [
+    const message: NamedTypedValue[] = [
         { type: 'Char', value: 'D', name: 'messageType' },
         { type: 'Int32', value: 2264035265, name: 'length' },
         {
@@ -46,7 +46,7 @@ Deno.test('write/read DataRow', async () => {
         },
     ]
     // const expectedRead = Object.fromEntries(message.map(v => [v.name, v.value])) as Record<string, unknown>
-    const expectedRead = _expected(message) as Record<string, unknown>
+    const expectedRead = fromEntries(message) as Record<string, unknown>
 
     const writeReadTester = new WriteReadTester()
     let messageWriterAdapter: MessageWriterAdapter | null = null
