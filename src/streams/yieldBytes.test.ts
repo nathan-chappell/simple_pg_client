@@ -1,4 +1,4 @@
-import { assert, assertEquals } from 'https://deno.land/std@0.161.0/testing/asserts.ts'
+import { assert, assertEquals, assertInstanceOf } from 'https://deno.land/std@0.161.0/testing/asserts.ts'
 import { readNBytes, yieldBytes, YieldBytesError } from './yieldBytes.ts'
 
 Deno.test('yieldBytes', async () => {
@@ -26,5 +26,6 @@ Deno.test('yieldBytes => error', async () => {
     } catch (e) {
         error = e
     }
-    assert(error instanceof YieldBytesError)
+    // assertInstanceOf(error, Error)
+    assert(error === 'unlock please')
 })

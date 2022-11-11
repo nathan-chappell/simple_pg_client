@@ -21,6 +21,17 @@ Deno.test('Read Int32', async () => {
     assertEquals(0x1 * 2 ** 24 + 0x2 * 2 ** 16 + 0xa * 2 ** 8 + 0xb, value)
 })
 
+Deno.test('Read Big Int32', async () => {
+    // 3550455105
+    const bytes = Uint8Array.from([65, 165, 159, 211])
+    const readable = new ReadableStream({
+        start: controller => controller.enqueue(bytes),
+    })
+    const dataTypeAdapter = new DataTypeAdapter(readable)
+    const value = await dataTypeAdapter.readInt32()
+    assertEquals(65 * 2 ** 24 + 165 * 2 ** 16 + 159 * 2 ** 8 + 211, value)
+})
+
 Deno.test('Read String', async () => {
     const strValue = 'foobar'
     const bytes = Uint8Array.from([...stringToBytes(strValue), 123])
