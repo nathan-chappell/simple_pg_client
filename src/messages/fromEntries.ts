@@ -1,5 +1,6 @@
 export type TypedValue<T = unknown> = { type: string; value: T }
-export type NamedValue<T = unknown> = { name: string } & TypedValue<T>
+export type TypedArray<T = unknown> = { sizeType: string; value: T[] }
+export type Named<T = unknown> = { name: string } & TypedValue<T>
 export type O = string | number | { [name: string]: O } | Array<O>
 
 export function isString(o: unknown): o is string {
@@ -14,16 +15,21 @@ export function isTypedValue(o: Record<never, never> | TypedValue): o is TypedVa
     return 'type' in o && typeof o.type === 'string' && 'value' in o
 }
 
-export function isNamedValue(o: Record<never, never> | NamedValue): o is NamedValue {
+export function isTypedArray(o: Record<never, never> | TypedArray): o is TypedArray {
+    return 'sizeType' in o && typeof o.sizeType === 'string' && 'value' in o && Array.isArray(o.value)
+}
+
+export function isNamedValue(o: Record<never, never> | Named): o is Named {
     return isTypedValue(o) && 'name' in o && typeof o.name === 'string'
 }
 
-export function isObjDef(o: Record<never, never>[] | NamedValue[]): o is NamedValue[] {
+export function isObjDef(o: Record<never, never>[] | Named[]): o is Named[] {
     return isNamedValue(o[0])
 }
 
+// this is for an array like [{type:..., value:...}, {type:..., value:...}]
 export function isArrayDef(o: Record<never, never>[] | TypedValue[]): o is TypedValue[] {
-    return isTypedValue(o[0]) && !isNamedValue(o[0])
+    return !isNamedValue(o[0]) && (isTypedValue(o[0]) || isTypedArray(o[0]))
 }
 
 export function fromEntries(o: unknown): O {
@@ -42,9 +48,13 @@ export function fromEntries(o: unknown): O {
             (result, item) => ((result[item.name] = fromEntries(item.value)), result),
             {} as { [name: string]: O },
         )
+    } else if (!!o && o instanceof Object && isTypedArray(o)) {
+        return o.value.map(fromEntries)
     } else if (Array.isArray(o) && isArrayDef(o)) {
         return o.map(item => fromEntries(item.value))
+    } else if (!!o && isTypedValue(o) && (typeof o.value === 'string' || typeof o.value === 'number')) {
+        return o.value
+    } else {
+        throw new Error(`Unable to create V from ${JSON.stringify(o, null, 2)}`)
     }
-
-    throw new Error(`Unable to create V from ${JSON.stringify(o, null, 2)}`)
 }

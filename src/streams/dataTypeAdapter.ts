@@ -31,12 +31,12 @@ export class DataTypeAdapter {
 
     async readInt16(): Promise<Byte> {
         const bytes = await readNBytes(this.byteYielder, 2)
-        return (bytes[0] << 8) | bytes[1]
+        return bytes[0] * 2 ** 8 + bytes[1]
     }
 
     async readInt32(): Promise<Byte> {
         const bytes = await readNBytes(this.byteYielder, 4)
-        return (bytes[0] << (8 * 3)) + (bytes[1] << (8 * 2)) + (bytes[2] << (8 * 1)) + bytes[3]
+        return bytes[0] * 2 ** 24 + bytes[1] * 2 ** 16 + bytes[2] * 2 ** 8 + bytes[3]
     }
 
     async readChar(): Promise<string> {

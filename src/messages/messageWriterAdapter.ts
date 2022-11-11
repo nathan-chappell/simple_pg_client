@@ -76,8 +76,9 @@ export const toByteArray: (tv: ITypedValue) => Byte[] = tv => {
             case 'Int32':
                 return [b0, b1, b2, b3].map(b => b(tv.value))
             case 'Char':
+                return [tv.value.charCodeAt(0)]
             case 'String':
-                return [...tv.value].map(c => c.charCodeAt(0))
+                return [...[...tv.value].map(c => c.charCodeAt(0)), 0]
             default:
                 throw new Error(`[toByteArray] couldn't byteify ${JSON.stringify(tv)}`)
         }
@@ -112,11 +113,9 @@ export class MessageWriterAdapter {
         const length = byteArrays.reduce((acc, a) => acc + a.length, 0)
         byteArrays[lengthIndex] = toByteArray({ type: lengthType, value: length } as ITypedNumberValue)
         const bytes = Uint8Array.from(byteArrays.flat())
-        console.log(`writing: ${bytes}`)
         try {
             return this.writer.write(bytes)
         } catch (error) {
-            console.log('here')
             console.error(error)
             throw error
         }
