@@ -2,12 +2,16 @@ type TMessageFormat = string
 type TAction = string
 type THandler = { on: TMessageFormat; action: TAction }
 
-interface IProtocol {
+interface IPhase {
     name: string
     fallbackAction: TAction
     handlers: THandler[]
+}
+
+interface IProtocol extends IPhase {
     phases?: IProtocol[]
 }
+
 
 export const proto: IProtocol = {
     name: "PG-Client",
