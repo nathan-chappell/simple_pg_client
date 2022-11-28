@@ -70,7 +70,7 @@ export class TypeInfo extends Configurable<TypeInfoOptions> {
 
     get typeValueType(): NumberType | StringType | Byte4Type {
         if (this.isArray) throw new Error('typeValueType of Array')
-        const tsTypeMap: { [tsType: string]: NumberType | StringType | Byte4Type | undefined } = {
+        const tsTypeMap: { [tsType: string]: NumberType | StringType | Byte4Type | 'KVPairs' | undefined } = {
             Byte1: 'Char',
             Byte4: 'Byte4',
             String: 'String',
@@ -78,9 +78,10 @@ export class TypeInfo extends Configurable<TypeInfoOptions> {
             Int8: 'Int8',
             Int16: 'Int16',
             Int32: 'Int32',
+            KVPairs: 'KVPairs'
         }
         const _type = tsTypeMap[this.with({ optional: false }).tsType]
-        if (_type !== undefined && (isNumberType(_type) || isStringType(_type) || isByte4Type(_type)))
+        if (_type !== undefined && (isNumberType(_type) || isStringType(_type) || isByte4Type(_type) || _type === 'KVPairs'))
             return _type
         else throw new Error(`Couldnt get typeValueType of ${this.rawType}`)
     }

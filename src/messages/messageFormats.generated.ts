@@ -17,6 +17,7 @@ import {
     Byte1,
     Byte4,
     String,
+    KVPairs,
     parseInt32,
     parseInt16,
     parseInt8,
@@ -997,9 +998,14 @@ export interface SSLRequest {
 //         the major version number (3 for the protocol described here). The
 //         least significant 16 bits are the minor version number (0 for the
 //         protocol described here).
+// * @parameters: The protocol version number is followed by one or more pairs
+//         of parameter name and value strings. A zero byte is required as a
+//         terminator after the last name/value pair. {user database? options?
+//         replication?}
 export interface StartupMessage {
-    length:   Int32     // Int32
-    protocol: Int32     // Int32(196608)
+    length:     Int32       // Int32
+    protocol:   Int32       // Int32(196608)
+    parameters: KVPairs     // KVPairs
 } // StartupMessage
 
 // no parser for StartupMessage (not backend)
@@ -1229,10 +1235,11 @@ export function makeSSLRequest(): NamedTypedValue[] {
         { "name": "length", "type": "Int32", "value": -1 },
     ]
 }
-export function makeStartupMessage(): NamedTypedValue[] {
+export function makeStartupMessage(parameters: KVPairs): NamedTypedValue[] {
     return [
         { "name": "length", "type": "Int32", "value": -1 },
         { "name": "protocol", "type": "Int32", "value": 196608 },
+        { "name": "parameters", "type": "KVPairs", "value": parameters },
     ]
 }
 export function makeSync(): NamedTypedValue[] {

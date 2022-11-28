@@ -49,6 +49,7 @@ export const builtinTypes: { [type: string]: TBuiltinTypeInfo } = {
     Byte1:  { jsType: 'string',     adapterType: 'Char' },
     Byte4:  { jsType: 'number[]',   adapterType: 'Byte4' },
     String: { jsType: 'string',     adapterType: 'String' },
+    KVPairs: { jsType: '[string, string][]', adapterType: 'KVPairs' },
     // Char:   { jsType: 'string',   adapterType: 'Char'   }, // no longer used...
 }
 
@@ -64,7 +65,12 @@ const imports_ = {
     // MessageWriterAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
     ITypedValue: new Import(['NamedTypedValue'], './ITypedValue.ts'),
     builtins: new Import(
-        [...Object.keys(builtinTypes), ...Object.keys(builtinTypes).map(t => `parse${t}`)],
+        [
+            ...Object.keys(builtinTypes),
+            ...Object.keys(builtinTypes)
+                .filter(k => k !== 'KVPairs')
+                .map(t => `parse${t}`),
+        ],
         `./${builtinsFileName}.ts`,
     ),
 }
