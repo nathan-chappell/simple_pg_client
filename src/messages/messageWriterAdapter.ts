@@ -29,6 +29,8 @@ function isTypedArray(tv: TypedValue | TypedArray): tv is TypedArray {
 }
 
 export const toByteArray: (tv: TypedValue | TypedArray) => Byte[] = tv => {
+    const makeString = (value: string) => ({ type: 'String', value } as TypedValue)
+    const makeInt8 = (value: number) => ({ type: 'Int8', value } as TypedValue)
     if (isTypedArray(tv)) {
         return [
             toByteArray({ type: tv.sizeType as SizeType, value: tv.value.length }),
@@ -36,9 +38,16 @@ export const toByteArray: (tv: TypedValue | TypedArray) => Byte[] = tv => {
         ].flat()
     } else if (tv.type === 'Byte4') {
         return tv.value
+    } else if (tv.type === 'ByteStringPairs') {
+        return [
+            ...tv.value.flatMap(pair => [makeInt8(pair[0]), makeString(pair[1])]).map(toByteArray),
+            toByteArray(makeInt8(0)),
+        ].flat()
     } else if (tv.type === 'KVPairs') {
-        const makeStr = (value: string) => ({ type: 'String', value } as TypedValue)
-        return [...tv.value.flatMap(pair => pair.map(makeStr).map(toByteArray)), toByteArray(makeStr(''))].flat()
+        return [
+            ...tv.value.flatMap(pair => [makeString(pair[0]), makeString(pair[1])]).map(toByteArray),
+            toByteArray(makeInt8(0)),
+        ].flat()
     } else if (isNumberType(tv.type) || isStringType(tv.type)) {
         switch (tv.type) {
             case 'Int8':

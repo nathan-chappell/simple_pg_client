@@ -35,7 +35,7 @@ const messageInfos = formats.map(format => new MessageInfo(format))
 const messages = messageInfos.map(info => new Message(info))
 const messagesByName = messages.reduce(
     (byName, m) => ((byName[m.info.name] = m), byName),
-    {} as Record<string, Message>,
+    {} as Record<string, Message>
 )
 
 function* getCounter() {
@@ -105,13 +105,13 @@ export class TypedValueGenerator {
                     return { type, value: this._nextSimpleValue(type) }
                 }
             } else if (type === 'ByteStringPairs') {
-                return [
-                    { type: 'Int8', value: 'A'.charCodeAt(0) },
-                    { type: 'String', value: 'foobar1' },
-                    { type: 'Int8', value: 'B'.charCodeAt(0) },
-                    { type: 'String', value: 'foobar2' },
-                    { type: 'Int8', value: 0 },
-                ] as NamedTypedValue[]
+                return {
+                    type: 'ByteStringPairs',
+                    value: [
+                        ['A'.charCodeAt(0), 'foobar1'],
+                        ['B'.charCodeAt(0), 'FOOBAR2'],
+                    ],
+                } as NamedTypedValue
             } else {
                 throw new Error(`Invalid overload: ${type}`)
             }
@@ -132,7 +132,7 @@ export class TypedValueGenerator {
         return message.info.properties
             .map(p => {
                 const next = this.nextTypedValue(p.typeInfo)
-                return Array.isArray(next) || isTypedArray(next) ? next : { ...next, name: p.name }
+                return Array.isArray(next) ? next : { ...next, name: p.name }
             })
             .flat()
     }

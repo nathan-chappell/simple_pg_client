@@ -43,7 +43,7 @@ export type TypedArray_<ST, T> = ST extends SizeType
         : never
     : never
 
-export type TypedValue = TypedValue_<TTypes> | KVPairsValue | ByteStringPairs
+export type TypedValue = TypedValue_<TTypes> | KVPairsValue | ByteStringPairsValue
 type TypedValue_not_byte4 = TypedValue_<Exclude<TTypes, 'Byte4'>>
 // I coudn't figure out the damn recursion for this type, so I just unrolled it by hand a couple times...
 export type TypedArray =
