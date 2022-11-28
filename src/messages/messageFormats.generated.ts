@@ -6,6 +6,10 @@ import {
 } from '../streams/dataTypeAdapter.ts'
 
 import {
+    ITypedValue,
+} from './messageWriterAdapter.ts'
+
+import {
     Int32,
     Int16,
     Int8,
@@ -1134,6 +1138,116 @@ export async function parseBackendMessage(adapter: DataTypeAdapter): Promise<IBa
     }
     throw new Error(`Couldn't parse backend message: ${JSON.stringify(baseMessage)}`)
 }
+
+//#endregion
+
+
+//#region Frontend Message Makers
+
+export function makeBind(portalName: String, statementName: String, pFormats: Int16[], parameters: Byte[][], rFormats: Int16[]): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "B" },
+        { "type": "Int32", "value": -1 },
+        { "type": "String", "value": portalName },
+        { "type": "String", "value": statementName },
+        { "sizeType": "Int16", "value": pFormats.map() },
+        { "sizeType": "Int16", "value": parameters.map() },
+        { "sizeType": "Int16", "value": rFormats.map() },
+    ]
+}
+export function makeCancelRequest(pid: Int32, key: Int32): ITypedValue[] {
+    return [
+        { "type": "Int32", "value": -1 },
+        { "type": "Int32", "value": 80877102 },
+        { "type": "Int32", "value": pid },
+        { "type": "Int32", "value": key },
+    ]
+}
+export function makeClose(qType: Byte1, name: String): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "C" },
+        { "type": "Int32", "value": -1 },
+        { "type": "Char", "value": qType },
+        { "type": "String", "value": name },
+    ]
+}
+export function makeCopyFail(message: String): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "f" },
+        { "type": "Int32", "value": -1 },
+        { "type": "String", "value": message },
+    ]
+}
+export function makeDescribe(qType: Byte1, name: String): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "D" },
+        { "type": "Int32", "value": -1 },
+        { "type": "Char", "value": qType },
+        { "type": "String", "value": name },
+    ]
+}
+export function makeExecute(name: String, limit: Int32): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "E" },
+        { "type": "Int32", "value": -1 },
+        { "type": "String", "value": name },
+        { "type": "Int32", "value": limit },
+    ]
+}
+export function makeFlush(): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "H" },
+        { "type": "Int32", "value": -1 },
+    ]
+}
+export function makeParse(name: String, query: String, pTypes: Int32[]): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "P" },
+        { "type": "Int32", "value": -1 },
+        { "type": "String", "value": name },
+        { "type": "String", "value": query },
+        { "sizeType": "Int16", "value": pTypes.map() },
+    ]
+}
+export function makePasswordMessage(password: String): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "p" },
+        { "type": "Int32", "value": -1 },
+        { "type": "String", "value": password },
+    ]
+}
+export function makeQuery(query: String): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "Q" },
+        { "type": "Int32", "value": -1 },
+        { "type": "String", "value": query },
+    ]
+}
+export function makeSSLRequest(): ITypedValue[] {
+    return [
+        { "type": "Int32", "value": 8 },
+        { "type": "Int32", "value": -1 },
+    ]
+}
+export function makeStartupMessage(): ITypedValue[] {
+    return [
+        { "type": "Int32", "value": -1 },
+        { "type": "Int32", "value": 196608 },
+    ]
+}
+export function makeSync(): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "S" },
+        { "type": "Int32", "value": -1 },
+    ]
+}
+export function makeTerminate(): ITypedValue[] {
+    return [
+        { "type": "Char", "value": "X" },
+        { "type": "Int32", "value": -1 },
+    ]
+}
+
 
 //#endregion
 

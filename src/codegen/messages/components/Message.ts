@@ -4,15 +4,19 @@ import { Interface, InterfacePropertyOptions } from '../../components/Interface.
 import { ParameterList } from '../../components/ParameterList.ts'
 import { Variable } from '../../components/Variable.ts'
 import { Block } from '../../components/Block.ts'
-import { MessageInfo } from './MessageInfo.ts'
+import { IMessageProperty, MessageInfo } from './MessageInfo.ts'
 import { ParseResult } from './ParseResult.ts'
-import { adapterParameter, baseMessageParameter, parserName } from './common.ts'
+import { adapterParameter, baseMessageParameter, parserName, messageMakerName } from './common.ts'
 import { TypeInfo } from './TypeInfo.ts'
 import { IWriter } from '../../components/IWriter.ts'
 import { ITextCompiler } from '../../compilers/ITextCompiler.ts'
 import { If_ } from '../../components/If_.ts'
 import { TComponent } from '../../compilers/TComponent.ts'
 import { EmptyLine } from '../../components/EmptyLine.ts'
+import { Fragment } from '../../components/Fragment.ts'
+import { Parameter } from '../../components/Parameter.ts'
+import { ICompiler } from '../../compilers/ICompiler.ts'
+import { isNumberType } from '../../../messages/ITypedValue.ts'
 
 export class Message {
     constructor(public info: MessageInfo) {}
@@ -167,7 +171,87 @@ export class Message {
         ]
     }
 
-    // get messageMaker(): Function_ {
-        // 
-    // }
+    get messageMaker(): Function_ {
+        if (!this.info.isFrontend)
+            throw new Error(`[messageMaker] only exists for frontend messagges: ${this.info.name}`)
+
+        type TProp = { name: string | null; typeInfo: TypeInfo; expected: string | null }
+        const prop2TProp: (p: IMessageProperty) => TProp = p => ({
+            name: p.name,
+            typeInfo: p.typeInfo,
+            expected: p.typeInfo.options.expected,
+        })
+
+        const isParameterProperty = (p: TProp) =>
+            p.name !== 'messageType' &&
+            p.name !== 'length' &&
+            (p.typeInfo.isArray || p.typeInfo.options.expected === null)
+
+        const parameterList = new ParameterList(
+            this.info.properties
+                .filter(p => isParameterProperty(prop2TProp(p)))
+                .map(p => new Parameter(p.name, p.typeInfo.tsType)),
+        )
+
+        const parameterNames = new Set(parameterList.parameters.map(p => p.name))
+
+        const parameter2TypedValue = ({ name, typeInfo, expected }: TProp) => {
+            let sizeTypeWriter = new Fragment('')
+            let nameWriter = name ? new Fragment('') : new Fragment(`"name": "${name}", `)
+            let typeWriter = new Fragment('')
+            let valueWriter: TComponent = new Fragment('')
+
+            if (typeInfo.isArray) {
+                const { sizeTypeInfo } = typeInfo
+                sizeTypeWriter = new Fragment(`"sizeType": "${sizeTypeInfo.typeValueType}", `)
+                // valueWriter = new Fragment(`/* the value */`)
+                valueWriter = (compiler: ITextCompiler) => {
+                    // const subValues = 
+                    // const mapFunction = new Function_('_mapValue', new ParameterList(new Parameter('value', )))
+                    return compiler.write(`"value": ${name}.map()`)
+                }
+                // return new Comment(['still thinking about arrays...'])
+            } else {
+                const { typeValueType } = typeInfo
+
+                if (isParameterProperty({ name, typeInfo, expected }) && !parameterNames.has(name ?? ''))
+                    throw new Error(`[messageMaker] missing parameter: ${name}: ${typeInfo.rawType}`)
+
+                const literalValue = parameterNames.has(name ?? '')
+                    ? name
+                    : name === 'length'
+                    ? -1
+                    : isNumberType(typeValueType)
+                    ? expected
+                    : `"${expected?.replaceAll("'", '')}"`
+
+                typeWriter = new Fragment(`"type": "${typeValueType}", `)
+                valueWriter = new Fragment(`"value": ${literalValue}`)
+            }
+            return new Block(
+                // new Fragment(`"type": "${typeValueType}", "name": "${name}", "value": ${literalValue}`),
+                (compiler: ITextCompiler) =>
+                    compiler.write(nameWriter, typeWriter, sizeTypeWriter, valueWriter),
+                '{',
+                '},',
+            ).with({
+                singleLine: true,
+            })
+        }
+
+        const typedValues = this.info.properties.map(prop2TProp).map(parameter2TypedValue)
+
+        const returnValue = new Block(
+            (compiler: ITextCompiler) => compiler.writeLines(...typedValues),
+            '[',
+            ']',
+        )
+
+        return new Function_(
+            messageMakerName(this.info),
+            parameterList,
+            (compiler: ITextCompiler) => compiler.write('return ', returnValue),
+            'ITypedValue[]',
+        )
+    }
 }

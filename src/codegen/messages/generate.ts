@@ -16,6 +16,7 @@ import { FileGenerator } from '../FileGenerator.ts'
 import { formats } from './import/formats.ts'
 import { TypedValueGenerator } from './components/TypedValueGenerator.ts'
 import { TypeInfo } from './components/TypeInfo.ts'
+import { ITextCompiler } from '../compilers/ITextCompiler.ts'
 
 //#region Deno API thunks
 
@@ -61,6 +62,7 @@ const messages = messageInfos.map(info => new Message(info))
 const imports_ = {
     DataTypeAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
     // MessageWriterAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
+    ITypedValue: new Import(['ITypedValue'], './messageWriterAdapter.ts'),
     builtins: new Import(
         [...Object.keys(builtinTypes), ...Object.keys(builtinTypes).map(t => `parse${t}`)],
         `./${builtinsFileName}.ts`,
@@ -101,11 +103,18 @@ const messageFormatRegions = messages
     .map(message => new Region(message.info.name, message.subComponentWriter))
 
 const backendParserRegion = new Region('BackendParser', new BackendParser(messageInfos))
+const frontendMessageMakerRegion = new Region('Frontend Message Makers', (compiler: ITextCompiler) =>
+    compiler.writeLines(
+        ...messages
+            .filter(m => m.info.isFrontend)
+            .map(m => m.messageMaker.with({ bodyType: 'expression', export_: true })),
+    ),
+)
 
 const messageFormatFileGenerator = new FileGenerator('messageFormats.generated', outputDirectory).with({
     lintIgnores: ['no-inferrable-types', 'require-await'],
     imports: Object.values(imports_),
-    components: [...messageFormatRegions, backendParserRegion],
+    components: [...messageFormatRegions, backendParserRegion, frontendMessageMakerRegion],
 })
 
 //#endregion

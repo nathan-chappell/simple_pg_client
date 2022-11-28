@@ -8,7 +8,7 @@ export interface BlockOptions {
 }
 
 export class Block extends Configurable<BlockOptions> implements IWriter {
-    constructor(public body: TComponent) {
+    constructor(public body: TComponent, public start: string = '{', public end: string = '}') {
         super({
             singleLine: false,
         })
@@ -16,9 +16,9 @@ export class Block extends Configurable<BlockOptions> implements IWriter {
 
     write(compiler: ITextCompiler): ITextCompiler {
         if (this.options.singleLine) {
-            return compiler.write('{ ', this.body, ' }')
+            return compiler.write(this.start, ' ', this.body, ' ', this.end)
         } else {
-            return compiler.write('{').withIndent(1, this.body).write('}')
+            return compiler.write(this.start).withIndent(1, this.body).write(this.end)
         }
     }
 }

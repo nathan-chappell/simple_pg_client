@@ -76,13 +76,9 @@ export class TypedValueGenerator {
         }
     }
 
-    mapProperty(p: IMessageProperty): TypedValue | TypedArray | (TypedValue | TypedArray)[] {
-        
-    }
-
     nextTypedValue(typeInfo: TypeInfo): TypedValue | TypedArray | (TypedValue | TypedArray)[] {
         if (typeInfo.with({ optional: false }).tsType === 'Byte4') {
-            return { type: 'Byte4', value: [...Array(4)].map(_ => this._nextSimpleValue('Int8')) as unknown as ['Int8','Int8','Int8','Int8'] }
+            return { type: 'Byte4', value: [...Array(4)].map(_ => this._nextSimpleValue('Int8')) as unknown as [number,number,number,number] }
         } else if (!typeInfo.isArray) {
             if (Object.hasOwn(messagesByName, typeInfo.tsType)) {
                 return this.nextMessage(messagesByName[typeInfo.tsType])

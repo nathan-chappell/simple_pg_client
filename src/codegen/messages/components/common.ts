@@ -18,3 +18,7 @@ export const parserName = (info: MessageInfo) => {
         return `parse${info.name}`
     }
 }
+
+export const messageMakerName = (info: MessageInfo) => {
+    return `make${info.name}`
+}

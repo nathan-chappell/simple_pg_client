@@ -28,6 +28,10 @@ export class MessageInfo {
         return !!this.format.backend
     }
 
+    get isFrontend() {
+        return !!this.format.frontend
+    }
+
     get isBackendBase() {
         return this.name === 'IBackendMessage'
     }
