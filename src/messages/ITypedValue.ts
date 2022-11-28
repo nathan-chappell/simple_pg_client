@@ -8,7 +8,7 @@ export function isNumberType(type: string): type is NumberType {
     return ['Byte', 'Int8', 'Int16', 'Int32'].indexOf(type) !== -1
 }
 
-export function isByte4Type(type: string): type is NumberType {
+export function isByte4Type(type: string): type is Byte4Type {
     return ['Byte4'].indexOf(type) !== -1
 }
 
@@ -38,8 +38,9 @@ export type TypedArray_<ST, T> = ST extends SizeType
     : never
 
 export type TypedValue = TypedValue_<TTypes>
+type TypedValue_not_byte4 = TypedValue_<Exclude<TTypes, 'Byte4'>>
 // I coudn't figure out the damn recursion for this type, so I just unrolled it by hand a couple times...
-export type TypedArray = TypedArray_<SizeType, TypedValue> | TypedArray_<SizeType, TypedArray_<SizeType, TypedValue>>
+export type TypedArray = TypedArray_<SizeType, TypedValue_not_byte4> | TypedArray_<SizeType, TypedArray_<SizeType, TypedValue_not_byte4>>
 export type Named<T> = T extends unknown ? T & { name: string } : never
 
 export type NamedTypedValue = Named<TypedValue | TypedArray>

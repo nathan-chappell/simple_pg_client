@@ -6,6 +6,9 @@ import {
     NumberType,
     StringType,
 } from '../../../messages/ITypedValue.ts'
+import { ITextCompiler } from '../../compilers/ITextCompiler.ts'
+import { CompilerCallback, TComponent } from '../../compilers/TComponent.ts'
+import { Block } from '../../components/Block.ts'
 import { Configurable } from '../../Configurable.ts'
 
 export interface TypeInfoOptions {
@@ -65,7 +68,7 @@ export class TypeInfo extends Configurable<TypeInfoOptions> {
         return TypeInfo.fromRawType(`${this.options.itemType}${innerItemArrayPart}`)
     }
 
-    get typeValueType(): NumberType | StringType {
+    get typeValueType(): NumberType | StringType | Byte4Type {
         if (this.isArray) throw new Error('typeValueType of Array')
         const tsTypeMap: { [tsType: string]: NumberType | StringType | Byte4Type | undefined } = {
             Byte1: 'Char',
@@ -80,5 +83,23 @@ export class TypeInfo extends Configurable<TypeInfoOptions> {
         if (_type !== undefined && (isNumberType(_type) || isStringType(_type) || isByte4Type(_type)))
             return _type
         else throw new Error(`Couldnt get typeValueType of ${this.rawType}`)
+    }
+
+    get literalTypedValueBlock(): Block {
+        let body: CompilerCallback
+        if (this.isArray) {
+            body = (compiler: ITextCompiler) =>
+                compiler.write(
+                    'sizeType: "',
+                    this.sizeTypeInfo.typeValueType,
+                    '", value: ',
+                    this.innerArrayTypeInfo.literalTypedValueBlock,
+                    '[]',
+                )
+        } else {
+            body = (compiler: ITextCompiler) =>
+                compiler.write('type: "', this.typeValueType, '", value: ', this.tsType)
+        }
+        return new Block(body).with({ singleLine: true })
     }
 }

@@ -62,7 +62,7 @@ const messages = messageInfos.map(info => new Message(info))
 const imports_ = {
     DataTypeAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
     // MessageWriterAdapter: new Import(['DataTypeAdapter'], '../streams/dataTypeAdapter.ts'),
-    ITypedValue: new Import(['ITypedValue'], './messageWriterAdapter.ts'),
+    ITypedValue: new Import(['NamedTypedValue'], './ITypedValue.ts'),
     builtins: new Import(
         [...Object.keys(builtinTypes), ...Object.keys(builtinTypes).map(t => `parse${t}`)],
         `./${builtinsFileName}.ts`,

@@ -182,10 +182,8 @@ export class Message {
             expected: p.typeInfo.options.expected,
         })
 
-        const isParameterProperty = (p: TProp) =>
-            p.name !== 'messageType' &&
-            p.name !== 'length' &&
-            (p.typeInfo.isArray || p.typeInfo.options.expected === null)
+        const isParameterProperty = ({ name, typeInfo, expected }: TProp) =>
+            name !== 'messageType' && name !== 'length' && (typeInfo.isArray || expected === null)
 
         const parameterList = new ParameterList(
             this.info.properties
@@ -196,22 +194,38 @@ export class Message {
         const parameterNames = new Set(parameterList.parameters.map(p => p.name))
 
         const parameter2TypedValue = ({ name, typeInfo, expected }: TProp) => {
+            const nameWriter = name === null ? new Fragment('') : new Fragment(`"name": "${name}", `)
             let sizeTypeWriter = new Fragment('')
-            let nameWriter = name ? new Fragment('') : new Fragment(`"name": "${name}", `)
             let typeWriter = new Fragment('')
             let valueWriter: TComponent = new Fragment('')
 
             if (typeInfo.isArray) {
-                const { sizeTypeInfo } = typeInfo
+                const { sizeTypeInfo, innerArrayTypeInfo } = typeInfo
                 sizeTypeWriter = new Fragment(`"sizeType": "${sizeTypeInfo.typeValueType}", `)
-                // valueWriter = new Fragment(`/* the value */`)
-                valueWriter = (compiler: ITextCompiler) => {
-                    // const subValues = 
-                    // const mapFunction = new Function_('_mapValue', new ParameterList(new Parameter('value', )))
-                    return compiler.write(`"value": ${name}.map()`)
-                }
-                // return new Comment(['still thinking about arrays...'])
+                valueWriter = (compiler: ITextCompiler) =>
+                    compiler
+                        .write('"value": ', name || 'value', '.map')
+                        .write(
+                            new Block(innerArrayTypeInfo.literalTypedValueBlock, '<', '>').with({
+                                singleLine: true,
+                            }),
+                        )
+                        .write('((value) => ')
+                        .write(
+                            new Block(
+                                parameter2TypedValue({
+                                    name: null,
+                                    typeInfo: innerArrayTypeInfo,
+                                    expected: 'value',
+                                }),
+                                '(',
+                                ')',
+                            ).with({ singleLine: true }),
+                        )
+                        .write(')') // as ...
             } else {
+                if (typeInfo.isArray)
+                    throw new Error(`[parameter2TypedValue] not implemented: ${typeInfo.tsType}`)
                 const { typeValueType } = typeInfo
 
                 if (isParameterProperty({ name, typeInfo, expected }) && !parameterNames.has(name ?? ''))
@@ -228,12 +242,9 @@ export class Message {
                 typeWriter = new Fragment(`"type": "${typeValueType}", `)
                 valueWriter = new Fragment(`"value": ${literalValue}`)
             }
-            return new Block(
-                // new Fragment(`"type": "${typeValueType}", "name": "${name}", "value": ${literalValue}`),
-                (compiler: ITextCompiler) =>
-                    compiler.write(nameWriter, typeWriter, sizeTypeWriter, valueWriter),
-                '{',
-                '},',
+
+            return new Block((compiler: ITextCompiler) =>
+                compiler.write(nameWriter, typeWriter, sizeTypeWriter, valueWriter),
             ).with({
                 singleLine: true,
             })
@@ -242,7 +253,8 @@ export class Message {
         const typedValues = this.info.properties.map(prop2TProp).map(parameter2TypedValue)
 
         const returnValue = new Block(
-            (compiler: ITextCompiler) => compiler.writeLines(...typedValues),
+            (compiler: ITextCompiler) =>
+                typedValues.reduce((compiler, block) => compiler.writeLine(block, ','), compiler),
             '[',
             ']',
         )
@@ -251,7 +263,7 @@ export class Message {
             messageMakerName(this.info),
             parameterList,
             (compiler: ITextCompiler) => compiler.write('return ', returnValue),
-            'ITypedValue[]',
+            'NamedTypedValue[]',
         )
     }
 }

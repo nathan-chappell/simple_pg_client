@@ -6,8 +6,8 @@ import {
 } from '../streams/dataTypeAdapter.ts'
 
 import {
-    ITypedValue,
-} from './messageWriterAdapter.ts'
+    NamedTypedValue,
+} from './ITypedValue.ts'
 
 import {
     Int32,
@@ -1144,107 +1144,107 @@ export async function parseBackendMessage(adapter: DataTypeAdapter): Promise<IBa
 
 //#region Frontend Message Makers
 
-export function makeBind(portalName: String, statementName: String, pFormats: Int16[], parameters: Byte[][], rFormats: Int16[]): ITypedValue[] {
+export function makeBind(portalName: String, statementName: String, pFormats: Int16[], parameters: Byte[][], rFormats: Int16[]): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "B" },
-        { "type": "Int32", "value": -1 },
-        { "type": "String", "value": portalName },
-        { "type": "String", "value": statementName },
-        { "sizeType": "Int16", "value": pFormats.map() },
-        { "sizeType": "Int16", "value": parameters.map() },
-        { "sizeType": "Int16", "value": rFormats.map() },
+        { "name": "messageType", "type": "Char", "value": "B" },
+        { "name": "length", "type": "Int32", "value": -1 },
+        { "name": "portalName", "type": "String", "value": portalName },
+        { "name": "statementName", "type": "String", "value": statementName },
+        { "name": "pFormats", "sizeType": "Int16", "value": pFormats.map< { type: "Int16", value: Int16 } >((value) => ( { "type": "Int16", "value": value } )) },
+        { "name": "parameters", "sizeType": "Int16", "value": parameters.map< { sizeType: "Int32", value: { type: "Int8", value: Byte }[] } >((value) => ( { "sizeType": "Int32", "value": value.map< { type: "Int8", value: Byte } >((value) => ( { "type": "Int8", "value": value } )) } )) },
+        { "name": "rFormats", "sizeType": "Int16", "value": rFormats.map< { type: "Int16", value: Int16 } >((value) => ( { "type": "Int16", "value": value } )) },
     ]
 }
-export function makeCancelRequest(pid: Int32, key: Int32): ITypedValue[] {
+export function makeCancelRequest(pid: Int32, key: Int32): NamedTypedValue[] {
     return [
-        { "type": "Int32", "value": -1 },
-        { "type": "Int32", "value": 80877102 },
-        { "type": "Int32", "value": pid },
-        { "type": "Int32", "value": key },
+        { "name": "length", "type": "Int32", "value": -1 },
+        { "name": "code", "type": "Int32", "value": 80877102 },
+        { "name": "pid", "type": "Int32", "value": pid },
+        { "name": "key", "type": "Int32", "value": key },
     ]
 }
-export function makeClose(qType: Byte1, name: String): ITypedValue[] {
+export function makeClose(qType: Byte1, name: String): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "C" },
-        { "type": "Int32", "value": -1 },
-        { "type": "Char", "value": qType },
-        { "type": "String", "value": name },
+        { "name": "messageType", "type": "Char", "value": "C" },
+        { "name": "length", "type": "Int32", "value": -1 },
+        { "name": "qType", "type": "Char", "value": qType },
+        { "name": "name", "type": "String", "value": name },
     ]
 }
-export function makeCopyFail(message: String): ITypedValue[] {
+export function makeCopyFail(message: String): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "f" },
-        { "type": "Int32", "value": -1 },
-        { "type": "String", "value": message },
+        { "name": "messageType", "type": "Char", "value": "f" },
+        { "name": "length", "type": "Int32", "value": -1 },
+        { "name": "message", "type": "String", "value": message },
     ]
 }
-export function makeDescribe(qType: Byte1, name: String): ITypedValue[] {
+export function makeDescribe(qType: Byte1, name: String): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "D" },
-        { "type": "Int32", "value": -1 },
-        { "type": "Char", "value": qType },
-        { "type": "String", "value": name },
+        { "name": "messageType", "type": "Char", "value": "D" },
+        { "name": "length", "type": "Int32", "value": -1 },
+        { "name": "qType", "type": "Char", "value": qType },
+        { "name": "name", "type": "String", "value": name },
     ]
 }
-export function makeExecute(name: String, limit: Int32): ITypedValue[] {
+export function makeExecute(name: String, limit: Int32): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "E" },
-        { "type": "Int32", "value": -1 },
-        { "type": "String", "value": name },
-        { "type": "Int32", "value": limit },
+        { "name": "messageType", "type": "Char", "value": "E" },
+        { "name": "length", "type": "Int32", "value": -1 },
+        { "name": "name", "type": "String", "value": name },
+        { "name": "limit", "type": "Int32", "value": limit },
     ]
 }
-export function makeFlush(): ITypedValue[] {
+export function makeFlush(): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "H" },
-        { "type": "Int32", "value": -1 },
+        { "name": "messageType", "type": "Char", "value": "H" },
+        { "name": "length", "type": "Int32", "value": -1 },
     ]
 }
-export function makeParse(name: String, query: String, pTypes: Int32[]): ITypedValue[] {
+export function makeParse(name: String, query: String, pTypes: Int32[]): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "P" },
-        { "type": "Int32", "value": -1 },
-        { "type": "String", "value": name },
-        { "type": "String", "value": query },
-        { "sizeType": "Int16", "value": pTypes.map() },
+        { "name": "messageType", "type": "Char", "value": "P" },
+        { "name": "length", "type": "Int32", "value": -1 },
+        { "name": "name", "type": "String", "value": name },
+        { "name": "query", "type": "String", "value": query },
+        { "name": "pTypes", "sizeType": "Int16", "value": pTypes.map< { type: "Int32", value: Int32 } >((value) => ( { "type": "Int32", "value": value } )) },
     ]
 }
-export function makePasswordMessage(password: String): ITypedValue[] {
+export function makePasswordMessage(password: String): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "p" },
-        { "type": "Int32", "value": -1 },
-        { "type": "String", "value": password },
+        { "name": "messageType", "type": "Char", "value": "p" },
+        { "name": "length", "type": "Int32", "value": -1 },
+        { "name": "password", "type": "String", "value": password },
     ]
 }
-export function makeQuery(query: String): ITypedValue[] {
+export function makeQuery(query: String): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "Q" },
-        { "type": "Int32", "value": -1 },
-        { "type": "String", "value": query },
+        { "name": "messageType", "type": "Char", "value": "Q" },
+        { "name": "length", "type": "Int32", "value": -1 },
+        { "name": "query", "type": "String", "value": query },
     ]
 }
-export function makeSSLRequest(): ITypedValue[] {
+export function makeSSLRequest(): NamedTypedValue[] {
     return [
-        { "type": "Int32", "value": 8 },
-        { "type": "Int32", "value": -1 },
+        { "name": "messageType", "type": "Int32", "value": 8 },
+        { "name": "length", "type": "Int32", "value": -1 },
     ]
 }
-export function makeStartupMessage(): ITypedValue[] {
+export function makeStartupMessage(): NamedTypedValue[] {
     return [
-        { "type": "Int32", "value": -1 },
-        { "type": "Int32", "value": 196608 },
+        { "name": "length", "type": "Int32", "value": -1 },
+        { "name": "protocol", "type": "Int32", "value": 196608 },
     ]
 }
-export function makeSync(): ITypedValue[] {
+export function makeSync(): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "S" },
-        { "type": "Int32", "value": -1 },
+        { "name": "messageType", "type": "Char", "value": "S" },
+        { "name": "length", "type": "Int32", "value": -1 },
     ]
 }
-export function makeTerminate(): ITypedValue[] {
+export function makeTerminate(): NamedTypedValue[] {
     return [
-        { "type": "Char", "value": "X" },
-        { "type": "Int32", "value": -1 },
+        { "name": "messageType", "type": "Char", "value": "X" },
+        { "name": "length", "type": "Int32", "value": -1 },
     ]
 }
 
