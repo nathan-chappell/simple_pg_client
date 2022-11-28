@@ -100,10 +100,12 @@ const messageFormatRegions = messages
     .filter(message => !message.info.extendsAuthentication)
     .map(message => new Region(message.info.name, message.subComponentWriter))
 
+const backendParserRegion = new Region('BackendParser', new BackendParser(messageInfos))
+
 const messageFormatFileGenerator = new FileGenerator('messageFormats.generated', outputDirectory).with({
     lintIgnores: ['no-inferrable-types', 'require-await'],
     imports: Object.values(imports_),
-    components: [...messageFormatRegions, new Region('BackendParser', new BackendParser(messageInfos))],
+    components: [...messageFormatRegions, backendParserRegion],
 })
 
 //#endregion

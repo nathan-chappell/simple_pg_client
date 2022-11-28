@@ -8,7 +8,7 @@ import {
 } from '../../../messages/ITypedValue.ts'
 import { formats } from '../import/formats.ts'
 import { Message } from './Message.ts'
-import { IMessageProperty, MessageInfo } from './MessageInfo.ts'
+import { MessageInfo } from './MessageInfo.ts'
 import { TypeInfo } from './TypeInfo.ts'
 /*
 from formats:
@@ -33,57 +33,18 @@ const messageInfos = formats.map(format => new MessageInfo(format))
 const messages = messageInfos.map(info => new Message(info))
 const messagesByName = messages.reduce(
     (byName, m) => ((byName[m.info.name] = m), byName),
-    {} as Record<string, Message>,
+    {} as Record<string, Message>
 )
 
-function* getCounter() {
-    let i = 0
-    while (true) yield i++
-}
-const count2Char = (n: number) => String.fromCharCode('A'.charCodeAt(0) + (n % 26))
-
 export class TypedValueGenerator {
-    counter: Generator<number, void, unknown>
-    constructor() {
-        this.counter = getCounter()
-    }
-
-    get nextCount(): number {
-        return this.counter.next().value!
-    }
-
-    get nextChar(): string {
-        return count2Char(this.nextCount)
-    }
-
-    _nextSimpleValue(type: StringType): string
-    _nextSimpleValue(type: NumberType): number
-
-    _nextSimpleValue(type: unknown): unknown {
-        switch (type) {
-            case 'Char':
-                return count2Char(this.nextCount)
-            case 'String':
-                return [...Array(7)].map(_ => this.nextChar).join('')
-            case 'Int8':
-                return this.nextCount % 2 ** 8
-            case 'Int16':
-                return this.nextCount ** 5 % 2 ** 16
-            case 'Int32':
-                return this.nextCount ** 8 % 2 ** 32
-            default:
-                throw new Error(`Unable to generate nextTypedValue for ${type}`)
-        }
-    }
-
-    mapProperty(p: IMessageProperty): TypedValue | TypedArray | (TypedValue | TypedArray)[] {
-        
-    }
+    constructor(public messagesByName: Record<string, Message>) {}
 
     nextTypedValue(typeInfo: TypeInfo): TypedValue | TypedArray | (TypedValue | TypedArray)[] {
-        if (typeInfo.with({ optional: false }).tsType === 'Byte4') {
-            return { type: 'Byte4', value: [...Array(4)].map(_ => this._nextSimpleValue('Int8')) as unknown as ['Int8','Int8','Int8','Int8'] }
-        } else if (!typeInfo.isArray) {
+        if (!typeInfo.isArray) {
+            // prettier-ignore
+            if (typeInfo.with({ optional: false }).tsType === 'Byte4') {
+                return { type: 'Byte4', value: [...Array(4)].map(_ => this._nextSimpleValue('Int8')) as unknown as ['Int8','Int8','Int8','Int8'] }
+            }
             if (Object.hasOwn(messagesByName, typeInfo.tsType)) {
                 return this.nextMessage(messagesByName[typeInfo.tsType])
             }
@@ -119,6 +80,8 @@ export class TypedValueGenerator {
     }
 
     nextMessage(message: Message): (TypedValue | TypedArray)[] {
-        return message.info.properties.map(p => ({ ...this.nextTypedValue(p.typeInfo), name: p.name })).flat()
+        return message.info.properties
+            .map(p => ({ ...this.nextTypedValue(p.typeInfo), name: p.name }))
+            .flat()
     }
 }

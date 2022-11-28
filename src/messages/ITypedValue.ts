@@ -21,8 +21,8 @@ export function isSizeType(type: string): type is StringType {
 }
 //#endregion
 
-type TTypes = NumberType | StringType
-type GetType<TType> = TType extends NumberType
+export type TTypes = NumberType | StringType | Byte4Type
+export type GetType<TType> = TType extends NumberType
     ? number
     : TType extends StringType
     ? string
@@ -30,17 +30,17 @@ type GetType<TType> = TType extends NumberType
     ? [number, number, number, number]
     : never
 
-type TypedValue_<T> = T extends TTypes ? { type: T; value: GetType<T> } : never
-type TypedArray_<ST, T> = ST extends SizeType
+export type TypedValue_<T> = T extends TTypes ? { type: T; value: GetType<T> } : never
+export type TypedArray_<ST, T> = ST extends SizeType
     ? T extends unknown
         ? { sizeType: ST; value: T[] }
         : never
     : never
 
-type TypedValue = TypedValue_<TTypes>
+export type TypedValue = TypedValue_<TTypes>
 // I coudn't figure out the damn recursion for this type, so I just unrolled it by hand a couple times...
-type TypedArray = TypedArray_<SizeType, TypedValue> | TypedArray_<SizeType, TypedArray_<SizeType, TypedValue>>
-type Named<T> = T extends unknown ? T & { name: string } : never
+export type TypedArray = TypedArray_<SizeType, TypedValue> | TypedArray_<SizeType, TypedArray_<SizeType, TypedValue>>
+export type Named<T> = T extends unknown ? T & { name: string } : never
 
 export type NamedTypedValue = Named<TypedValue | TypedArray>
 export type NamedTypedArray = Named<TypedArray>

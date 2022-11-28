@@ -29,7 +29,7 @@ export function isITypedNumberValue(tv: ITypedValue): tv is ITypedNumberValue {
 export interface ITypedByte4Value {
     name?: string
     type: 'Byte4'
-    value: number[]
+    value: [number,number,number,number]
 }
 
 export function isITypedByte4Value(tv: ITypedValue): tv is ITypedByte4Value {
