@@ -3,7 +3,7 @@ import { parseBackendMessage, IBackendMessage } from '../messages/messageFormats
 import { MessageWriterAdapter } from '../messages/messageWriterAdapter.ts'
 import { DataTypeAdapter } from '../streams/dataTypeAdapter.ts'
 import { delay } from './delay.ts'
-import { IProtocol, IState } from './IProtocol.ts'
+import { IProtocol, ProtocolState } from './IProtocol.ts'
 
 export class Engine {
     delay_ms = 10
@@ -15,13 +15,12 @@ export class Engine {
     readingPromise: Promise<void> | null = null
     writingPromise: Promise<void> | null = null
 
-    history: IState[] = []
-
     constructor(
         public dataReader: DataTypeAdapter,
         public messageWriter: MessageWriterAdapter,
         public protocol: IProtocol,
-        public state: IState = { name: 'Initial' },
+        public sendPassword: () => void,
+        public state: ProtocolState = new ProtocolState('Initial', sendPassword)
     ) {}
 
     async start() {
@@ -40,11 +39,10 @@ export class Engine {
         }
     }
 
-    async handleMessage(message: IBackendMessage) {
+    handleMessage(message: IBackendMessage) {
         const handler = this.protocol[this.state.name]
         if (typeof handler === 'function') {
-            this.history.push(this.state)
-            this.state = await handler(this.state, message)
+            handler(this.state, message)
         } else {
             throw new Error(`No handler found for state ${this.state.name}`)
         }
