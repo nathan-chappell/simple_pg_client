@@ -12,7 +12,11 @@ import { IProtocol, ProtocolState } from './IProtocol.ts'
 const CLEARTEXT_PASSWORD = 3
 
 class ProtocolError extends Error {
-    constructor(public state: ProtocolState, public backendMessage: IBackendMessage, public remark: string = '') {
+    constructor(
+        public state: ProtocolState,
+        public backendMessage: IBackendMessage,
+        public remark: string = ''
+    ) {
         super(`Error from ${state.name}: ${remark}`)
     }
 }
@@ -25,7 +29,7 @@ export const frontendProtocol: IProtocol = {
         if (isErrorResponse(m)) {
             throw new ProtocolError(s, m, getErrorMessage(m))
         } else if (isReadyForQuery(m)) {
-            s.name = 'Ready'
+            s.transition('Ready')
         } else if (isIAuthenticationMessage(m)) {
             if (m.code === CLEARTEXT_PASSWORD) {
                 s.sendPassword()
@@ -36,7 +40,7 @@ export const frontendProtocol: IProtocol = {
     Ready: (s, m) => {},
     SimpleQuery: (s, m) => {
         if (isReadyForQuery(m)) {
-            s.name = 'Ready'
+            s.transition('Ready')
         } else if (isErrorResponse(m)) {
             throw new ProtocolError(s, m, getErrorMessage(m))
         } else if (isRowDescription(m)) {

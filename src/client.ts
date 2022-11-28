@@ -2,6 +2,7 @@ import { makePasswordMessage, makeQuery, makeStartupMessage } from './messages/m
 import { MessageWriterAdapter } from './messages/messageWriterAdapter.ts'
 import { Engine } from './protocol/engine.ts'
 import { frontendProtocol } from './protocol/frontendProtocol.ts'
+import { IDataset } from './protocol/IProtocol.ts'
 import { DataTypeAdapter } from './streams/dataTypeAdapter.ts'
 
 interface IReadWriteable {
@@ -53,8 +54,13 @@ export class Client {
         )
     }
 
-    query(query: string) {
+    async query(query: string): Promise<{ completionMessages: string[]; datasets: IDataset[] }> {
         if (!this.engine) throw new Error('[query] failed due to engine failure.')
         this.engine.txQueue.push(makeQuery(query))
+        await this.engine.state.waitFor('Ready')
+        return {
+            completionMessages: this.engine!.state.completionMessages,
+            datasets: this.engine!.state.datasets,
+        }
     }
 }
