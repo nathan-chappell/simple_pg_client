@@ -19,7 +19,7 @@ export function isStringType(type: string): type is StringType {
     return ['String', 'Char'].indexOf(type) !== -1
 }
 
-export function isSizeType(type: string): type is StringType {
+export function isSizeType(type: string): type is SizeType {
     return ['Int16', 'Int32'].indexOf(type) !== -1
 }
 //#endregion

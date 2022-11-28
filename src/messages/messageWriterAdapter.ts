@@ -38,7 +38,7 @@ export const toByteArray: (tv: TypedValue | TypedArray) => Byte[] = tv => {
         return tv.value
     } else if (tv.type === 'KVPairs') {
         const makeStr = (value: string) => ({ type: 'String', value } as TypedValue)
-        return [...tv.value.flatMap(pair => pair.map(makeStr).map(toByteArray)), toByteArray(makeStr(''))]
+        return [...tv.value.flatMap(pair => pair.map(makeStr).map(toByteArray)), toByteArray(makeStr(''))].flat()
     } else if (isNumberType(tv.type) || isStringType(tv.type)) {
         switch (tv.type) {
             case 'Int8':

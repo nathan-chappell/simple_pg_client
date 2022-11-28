@@ -68,9 +68,11 @@ export class TypeInfo extends Configurable<TypeInfoOptions> {
         return TypeInfo.fromRawType(`${this.options.itemType}${innerItemArrayPart}`)
     }
 
-    get typeValueType(): NumberType | StringType | Byte4Type {
+    get typeValueType(): NumberType | StringType | Byte4Type | 'KVPairs' | 'ByteStringPairs' {
         if (this.isArray) throw new Error('typeValueType of Array')
-        const tsTypeMap: { [tsType: string]: NumberType | StringType | Byte4Type | 'KVPairs' | undefined } = {
+        const tsTypeMap: {
+            [tsType: string]: NumberType | StringType | Byte4Type | 'KVPairs' | 'ByteStringPairs' | undefined
+        } = {
             Byte1: 'Char',
             Byte4: 'Byte4',
             String: 'String',
@@ -78,10 +80,18 @@ export class TypeInfo extends Configurable<TypeInfoOptions> {
             Int8: 'Int8',
             Int16: 'Int16',
             Int32: 'Int32',
-            KVPairs: 'KVPairs'
+            KVPairs: 'KVPairs',
+            ByteStringPairs: 'ByteStringPairs',
         }
         const _type = tsTypeMap[this.with({ optional: false }).tsType]
-        if (_type !== undefined && (isNumberType(_type) || isStringType(_type) || isByte4Type(_type) || _type === 'KVPairs'))
+        if (
+            _type !== undefined &&
+            (isNumberType(_type) ||
+                isStringType(_type) ||
+                isByte4Type(_type) ||
+                _type === 'KVPairs' ||
+                _type === 'ByteStringPairs')
+        )
             return _type
         else throw new Error(`Couldnt get typeValueType of ${this.rawType}`)
     }

@@ -53,4 +53,26 @@ export class DataTypeAdapter {
         const bytes = await readNBytes(this.byteYielder, 4)
         return bytes
     }
+
+    async readByteStringPairs(): Promise<[number, string][]> {
+        let byte = await this.readInt8()
+        const result: [number, string][] = []
+        while (byte !== 0) {
+            const value = await this.readString()
+            result.push([byte, value])
+            byte = await this.readInt8()
+        }
+        return result
+    }
+
+    async readKVPairs(): Promise<[string, string][]> {
+        const result: [string, string][] = []
+        let key: string = await this.readString()
+        while (key !== '') {
+            const value = await this.readString()
+            result.push([key, value])
+            key = await this.readString()
+        }
+        return result
+    }
 }

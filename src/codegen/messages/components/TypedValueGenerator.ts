@@ -5,6 +5,7 @@ import {
     TypedArray,
     NumberType,
     StringType,
+    NamedTypedValue,
 } from '../../../messages/ITypedValue.ts'
 import { formats } from '../import/formats.ts'
 import { Message } from './Message.ts'
@@ -78,7 +79,11 @@ export class TypedValueGenerator {
 
     nextTypedValue(typeInfo: TypeInfo): TypedValue | TypedArray | (TypedValue | TypedArray)[] {
         if (typeInfo.with({ optional: false }).tsType === 'Byte4') {
-            return { type: 'Byte4', value: [...Array(4)].map(_ => this._nextSimpleValue('Int8')) as unknown as [number,number,number,number] }
+            type TBytes = [number, number, number, number]
+            return {
+                type: 'Byte4',
+                value: [...Array(4)].map(_ => this._nextSimpleValue('Int8')) as unknown as TBytes,
+            }
         } else if (!typeInfo.isArray) {
             if (Object.hasOwn(messagesByName, typeInfo.tsType)) {
                 return this.nextMessage(messagesByName[typeInfo.tsType])
@@ -98,6 +103,12 @@ export class TypedValueGenerator {
                 } else {
                     return { type, value: this._nextSimpleValue(type) }
                 }
+            } else if (type === 'ByteStringPairs') {
+                return [
+                    { name: '_', type: 'String', value: 'foobar1' },
+                    { name: '_', type: 'String', value: 'foobar2' },
+                    { name: '_', type: 'Int8', value: 0 },
+                ] as NamedTypedValue[]
             } else {
                 throw new Error(`Invalid overload: ${type}`)
             }
@@ -115,6 +126,11 @@ export class TypedValueGenerator {
     }
 
     nextMessage(message: Message): (TypedValue | TypedArray)[] {
-        return message.info.properties.map(p => ({ ...this.nextTypedValue(p.typeInfo), name: p.name })).flat()
+        return message.info.properties
+            .map(p => {
+                const next = this.nextTypedValue(p.typeInfo)
+                return Array.isArray(next) ? next : { ...next, name: p.name }
+            })
+            .flat()
     }
 }

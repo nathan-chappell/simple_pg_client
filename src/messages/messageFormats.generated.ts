@@ -18,6 +18,7 @@ import {
     Byte4,
     String,
     KVPairs,
+    ByteStringPairs,
     parseInt32,
     parseInt16,
     parseInt8,
@@ -25,6 +26,8 @@ import {
     parseByte1,
     parseByte4,
     parseString,
+    parseKVPairs,
+    parseByteStringPairs,
 } from './builtinTypes.generated.ts'
 
 
@@ -537,12 +540,21 @@ export function isEmptyQueryResponse(baseMessage: IBackendMessage): baseMessage 
 
 // * @messageType: Identifies the message as an error.
 // * @length: Length of message contents in bytes, including self.
+// * @fields: The message body consists of one or more identified fields, followed
+//         by a zero byte as a terminator.
 export interface ErrorResponse {
-    messageType: Byte1     // Byte1('E')
-    length:      Int32     // Int32
+    messageType: Byte1               // Byte1('E')
+    length:      Int32               // Int32
+    fields:      ByteStringPairs     // ByteStringPairs
 } // ErrorResponse
 
-export const parseErrorResponse: (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ErrorResponse> = async (_adapter, baseMessage) => baseMessage
+export const parseErrorResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<ErrorResponse> = async (adapter, baseMessage) => {
+    const fields: ByteStringPairs = await parseByteStringPairs(adapter)
+    return {
+        ...baseMessage,
+        fields,
+    }
+}
 
 export function isErrorResponse(baseMessage: IBackendMessage): baseMessage is ErrorResponse {
     return baseMessage.messageType === 'E'

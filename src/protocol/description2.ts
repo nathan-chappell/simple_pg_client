@@ -1,45 +1,28 @@
-import { Action, IState, MessageTest } from './engine.ts'
+import { isReadyForQuery } from '../messages/messageFormats.generated.ts'
+import { IBackendMessage } from '../messages/messageFormats.generated.ts'
+import { isErrorResponse } from '../messages/messageFormats.generated.ts'
+import { IProtocol, IState } from './IProtocol.ts'
 
 interface IDependencies {
-    fail: Action
-    goto: (state: string) => Action
-    log: Action
-
-    sendMD5PasswordMessage: Action
-    storeKeyData: Action
-
-    isAuthenticationMD5Password: MessageTest
-    isAuthenticationOk: MessageTest
-    isBackendKeyData: MessageTest
-    isErrorResponse: MessageTest
-    isReadyForQuery: MessageTest
+    log: (m: IBackendMessage, s: IState) => void
 }
 
-export const proto: (I: IDependencies) => IState = I => ({
-    name: 'PG-Client',
-    fallbackActions: [I.log],
-    handlers: [{ if_: I.isErrorResponse, actions: [I.fail] }],
-    substates: [
-        {
-            name: 'StartUp',
-            fallbackActions: [I.goto('Fail')],
-            handlers: [
-                { if_: I.isAuthenticationOk, actions: [I.goto('Waiting')] },
-                { if_: I.isAuthenticationMD5Password, actions: [I.sendMD5PasswordMessage] },
-            ],
-        },
-        {
-            name: 'Waiting',
-            fallbackActions: [I.log],
-            handlers: [
-                { if_: I.isBackendKeyData, actions: [I.storeKeyData] },
-                { if_: I.isReadyForQuery, actions: [I.goto('Ready')] },
-            ],
-        },
-        {
-            name: 'Ready',
-            fallbackActions: [I.log],
-            handlers: [{ if_: I.isErrorResponse, actions: [I.fail] }],
-        },
-    ],
+class ProtocolError extends Error {
+    constructor(public state: IState, public backendMessage: IBackendMessage, public remark: string = '') {
+        super(`Error from ${state.name}: ${remark}`)
+    }
+}
+
+export const proto: (I: IDependencies) => IProtocol = I => ({
+    Initial: (s, m) => {
+        let nextState: IState = s
+        if (isErrorResponse(m)) {
+            throw new ProtocolError(s, m)
+        } else if (isReadyForQuery(m)) {
+            nextState = { ...s, name: 'Ready' }
+        } else {
+            I.log(m, s)
+        }
+        return Promise.resolve(nextState)
+    },
 })
