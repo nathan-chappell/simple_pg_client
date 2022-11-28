@@ -1,3 +1,4 @@
+import { isTypedArray } from '../../../messages/fromEntries.ts'
 import {
     isNumberType,
     isStringType,
@@ -105,9 +106,11 @@ export class TypedValueGenerator {
                 }
             } else if (type === 'ByteStringPairs') {
                 return [
-                    { name: '_', type: 'String', value: 'foobar1' },
-                    { name: '_', type: 'String', value: 'foobar2' },
-                    { name: '_', type: 'Int8', value: 0 },
+                    { type: 'Int8', value: 'A'.charCodeAt(0) },
+                    { type: 'String', value: 'foobar1' },
+                    { type: 'Int8', value: 'B'.charCodeAt(0) },
+                    { type: 'String', value: 'foobar2' },
+                    { type: 'Int8', value: 0 },
                 ] as NamedTypedValue[]
             } else {
                 throw new Error(`Invalid overload: ${type}`)
@@ -129,7 +132,7 @@ export class TypedValueGenerator {
         return message.info.properties
             .map(p => {
                 const next = this.nextTypedValue(p.typeInfo)
-                return Array.isArray(next) ? next : { ...next, name: p.name }
+                return Array.isArray(next) || isTypedArray(next) ? next : { ...next, name: p.name }
             })
             .flat()
     }

@@ -44,14 +44,10 @@ export function fromEntries(o: unknown): O {
         throw new Error('unexpected number[]')
         // return o.map(fromEntries)
     } else if (Array.isArray(o) && isObjDef(o)) {
-        return o.reduce((result, item) => {
-            if (item.name === '_' && item.type === 'Int8') {
-                // skip
-            } else {
-                result[item.name] = fromEntries(item.value)
-            }
-            return result
-        }, {} as { [name: string]: O })
+        return o.reduce(
+            (result, item) => ((result[item.name] = fromEntries(item.value)), result),
+            {} as { [name: string]: O },
+        )
     } else if (!!o && o instanceof Object && isTypedArray(o)) {
         return o.value.map(fromEntries)
     } else if (Array.isArray(o) && isArrayDef(o)) {

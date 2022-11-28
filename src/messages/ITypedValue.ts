@@ -6,6 +6,9 @@ export type SizeType = 'Int16' | 'Int32'
 export type KVPairsType = 'KVPairs'
 export type KVPairsValue = { type: KVPairsType; value: [string, string][] }
 
+export type ByteStringPairs = 'ByteStringPairs'
+export type ByteStringPairsValue = { type: ByteStringPairs; value: [number, string][] }
+
 //#region guards
 export function isNumberType(type: string): type is NumberType {
     return ['Byte', 'Int8', 'Int16', 'Int32'].indexOf(type) !== -1
@@ -40,7 +43,7 @@ export type TypedArray_<ST, T> = ST extends SizeType
         : never
     : never
 
-export type TypedValue = TypedValue_<TTypes> | KVPairsValue
+export type TypedValue = TypedValue_<TTypes> | KVPairsValue | ByteStringPairs
 type TypedValue_not_byte4 = TypedValue_<Exclude<TTypes, 'Byte4'>>
 // I coudn't figure out the damn recursion for this type, so I just unrolled it by hand a couple times...
 export type TypedArray =

@@ -10,7 +10,7 @@ import { WriteReadTester } from '../../streams/WriteReadTester.ts'
 import { fromEntries } from '../fromEntries.ts'
 
 Deno.test('write/read ErrorResponse', async () => {
-    const message: NamedTypedValue[] = [{"type":"Char","value":"E","name":"messageType"},{"type":"Int32","value":1312527521,"name":"length"},{"name":"_","type":"String","value":"foobar1"},{"name":"_","type":"String","value":"foobar2"},{"name":"_","type":"Int8","value":0}]
+    const message: NamedTypedValue[] = [{"type":"Char","value":"E","name":"messageType"},{"type":"Int32","value":1312527521,"name":"length"},{"type":"Int8","value":65},{"type":"String","value":"foobar1"},{"type":"Int8","value":66},{"type":"String","value":"foobar2"},{"type":"Int8","value":0}]
     const expectedRead = fromEntries(message) as Record<string, unknown>
 
     const writeReadTester = new WriteReadTester()
