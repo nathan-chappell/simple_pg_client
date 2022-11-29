@@ -6,7 +6,9 @@ export async function* yieldBytes(readable: ReadableStream) {
     const reader: ReadableStreamDefaultReader<Iterable<number>> = readable.getReader({ mode: undefined })
     try {
         while (true) {
+            // console.debug('[yieldBytes] reading...')
             const { value, done } = await reader.read()
+            // console.debug(`[yieldBytes] read: ${value} (${done})`)
             if (done) throw new YieldBytesError(`stream is done`)
             yield* value
         }

@@ -16,7 +16,8 @@ export const testClient = async (client: Client) => {
     console.log('waiting for ready')
     await client.engine!.state.waitFor('Ready')
     console.log('sending query')
-    const result = await client.query('select c from foo;')
+    // const result = await client.query('select c from foo;')
+    const result = await client.query('SELECT * FROM foo;')
     console.log('query complete')
     console.log(result)
 }

@@ -1,4 +1,11 @@
-import { makeExecute, makePasswordMessage, makeQuery, makeStartupMessage } from './messages/messageFormats.generated.ts'
+import {
+    makeExecute,
+    makePasswordMessage,
+    makeQuery,
+    makeStartupMessage,
+    makeSync,
+    makeTerminate,
+} from './messages/messageFormats.generated.ts'
 import { MessageWriterAdapter } from './messages/messageWriterAdapter.ts'
 import { Engine } from './protocol/engine.ts'
 import { frontendProtocol } from './protocol/frontendProtocol.ts'
@@ -54,14 +61,28 @@ export class Client {
             makeStartupMessage([
                 ['user', this.configuration.username],
                 ['database', this.configuration.database],
-            ])
+            ]),
         )
     }
 
     async query(query: string): Promise<{ completionMessages: string[]; datasets: IDataset[] }> {
         if (!this.engine) throw new Error('[query] failed due to engine failure.')
         this.engine.state.transition('SimpleQuery')
+        this.engine.txQueue.push(makeSync())
         this.engine.txQueue.push(makeQuery(query))
+        await this.engine.state.waitFor('Ready')
+        return {
+            completionMessages: this.engine!.state.completionMessages,
+            datasets: this.engine!.state.datasets,
+        }
+    }
+
+    async describe(query: string): Promise<{ completionMessages: string[]; datasets: IDataset[] }> {
+        if (!this.engine) throw new Error('[query] failed due to engine failure.')
+        this.engine.state.transition('SimpleQuery')
+        this.engine.txQueue.push(makeQuery(query))
+        // this.engine.txQueue.push([{name: 'length', type: 'Int32', value: -1}])
+        // this.engine.txQueue.push(makeTerminate())
         // this.engine.txQueue.push(makeExecute('',-1))
         await this.engine.state.waitFor('Ready')
         return {

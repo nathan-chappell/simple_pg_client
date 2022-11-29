@@ -60,6 +60,7 @@ export const toByteArray: (tv: TypedValue | TypedArray) => Byte[] = tv => {
                 return [tv.value.charCodeAt(0)]
             case 'String':
                 return [...[...tv.value].map(c => c.charCodeAt(0)), 0]
+                // return [...tv.value].map(c => c.charCodeAt(0))
             default:
                 throw new Error(`[toByteArray] couldn't byteify ${JSON.stringify(tv)}`)
         }
@@ -81,7 +82,7 @@ export class MessageWriterAdapter {
 
     writeMessage(message: NamedTypedValue[]): Promise<void> {
         console.debug('[writeMessage]')
-        console.debug(JSON.stringify(message, null, 2))
+        console.debug(JSON.stringify(message, null, 0))
         const lengthIndex = message.findIndex(tv => tv.name === 'length')
         if (lengthIndex === -1) {
             throw new Error(`[MessageWriterAdapter.writeMessage] all messages must have a "length" value`)
@@ -92,13 +93,19 @@ export class MessageWriterAdapter {
             throw new Error(`[MessageWriterAdapter.writeMessage] only length types of Int32 are expected`)
         }
 
+        const hasMessageType = message.find(tv => tv.name === 'messageType')
+        const lengthCorrection = hasMessageType ? 1 : 0
+
         const byteArrays = message.map(toByteArray)
-        const length = byteArrays.reduce((acc, a) => acc + a.length, 0)
+        const length = byteArrays.reduce((acc, a) => acc + a.length, 0) - lengthCorrection
         byteArrays[lengthIndex] = toByteArray({ type: lengthType, value: length } as TypedValue)
+
         console.debug(`[writeMessage] length: ${length}`)
         console.debug(byteArrays[lengthIndex])
+        
         const bytes = Uint8Array.from(byteArrays.flat())
         console.debug(bytes)
+        
         try {
             return this.writer.write(bytes)
         } catch (error) {

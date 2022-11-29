@@ -27,12 +27,11 @@ const getErrorMessage = (m: ErrorResponse) =>
 
 const log = (s: ProtocolState, m: IBackendMessage) => {
     console.debug(`[Log] (${s.name})`)
-    console.debug(JSON.stringify(m, null, 2))
+    console.debug(JSON.stringify(m, null, 0))
 }
 
 export const frontendProtocol: IProtocol = {
     Initial: (s, m) => {
-        // console.debug('[frontendProtocol] Initial')
         log(s, m)
         if (isErrorResponse(m)) {
             throw new ProtocolError(s, m, getErrorMessage(m))
@@ -52,7 +51,6 @@ export const frontendProtocol: IProtocol = {
         log(s, m)
     },
     SimpleQuery: (s, m) => {
-        // console.debug('[frontendProtocol] SimpleQuery')
         log(s, m)
         if (isReadyForQuery(m)) {
             s.transition('Ready')

@@ -48,20 +48,22 @@ export class Engine {
     }
 
     handleMessage(message: IBackendMessage) {
-        console.debug('[Engine] handleMessage')
+        console.debug(`[Engine] handleMessage (${message.messageType})[${message.length}]`)
         const handler = this.protocol[this.state.name]
         if (typeof handler === 'function') {
             handler(this.state, message)
         } else {
+            console.error('No handler found')
             throw new Error(`No handler found for state ${this.state.name}`)
         }
     }
 
     async startReading() {
         while (this.running) {
-            console.debug('[Engine] parseBackendMessage')
+            // console.debug('[Engine] parseBackendMessage')
             const message = await parseBackendMessage(this.dataReader)
             console.debug('[Engine] parseBackendMessage complete')
+            console.debug(JSON.stringify(message, null, 0))
             this.rxQueue.push(message)
         }
     }
