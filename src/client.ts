@@ -1,3 +1,4 @@
+import { mapColumn } from './datamapper.ts'
 import {
     makeExecute,
     makePasswordMessage,
@@ -65,29 +66,22 @@ export class Client {
         )
     }
 
-    async query(query: string): Promise<{ completionMessages: string[]; datasets: IDataset[] }> {
+    async query(query: string): Promise<{ completionMessages: string[]; rowSets: (number | string)[][][] }> {
         if (!this.engine) throw new Error('[query] failed due to engine failure.')
         this.engine.state.transition('SimpleQuery')
-        this.engine.txQueue.push(makeSync())
+        // this.engine.txQueue.push(makeSync())
         this.engine.txQueue.push(makeQuery(query))
         await this.engine.state.waitFor('Ready')
-        return {
-            completionMessages: this.engine!.state.completionMessages,
-            datasets: this.engine!.state.datasets,
-        }
-    }
+        const mapDataset = (dataset: IDataset) =>
+            dataset.rows.map(row => row.map((column, i) => mapColumn(column, dataset.fields[i])))
 
-    async describe(query: string): Promise<{ completionMessages: string[]; datasets: IDataset[] }> {
-        if (!this.engine) throw new Error('[query] failed due to engine failure.')
-        this.engine.state.transition('SimpleQuery')
-        this.engine.txQueue.push(makeQuery(query))
-        // this.engine.txQueue.push([{name: 'length', type: 'Int32', value: -1}])
-        // this.engine.txQueue.push(makeTerminate())
-        // this.engine.txQueue.push(makeExecute('',-1))
-        await this.engine.state.waitFor('Ready')
-        return {
+        const result = {
             completionMessages: this.engine!.state.completionMessages,
-            datasets: this.engine!.state.datasets,
+            rowSets: this.engine!.state.datasets.map(mapDataset),
         }
+
+        this.engine.state.completionMessages = []
+        this.engine.state.datasets = []
+        return result
     }
 }
