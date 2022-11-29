@@ -66,14 +66,18 @@ export class Client {
         )
     }
 
-    async query(query: string): Promise<{ completionMessages: string[]; rowSets: (number | string)[][][] }> {
+    async query(
+        query: string,
+    ): Promise<{ completionMessages: string[]; rowSets: [string, number | string][][][] }> {
         if (!this.engine) throw new Error('[query] failed due to engine failure.')
         this.engine.state.transition('SimpleQuery')
         // this.engine.txQueue.push(makeSync())
         this.engine.txQueue.push(makeQuery(query))
         await this.engine.state.waitFor('Ready')
-        const mapDataset = (dataset: IDataset) =>
-            dataset.rows.map(row => row.map((column, i) => mapColumn(column, dataset.fields[i])))
+        // prettier-ignore
+        const mapDataset = (dataset: IDataset) => dataset.rows.map(row =>
+            row.map((column, i) => [dataset.fields[i].name, mapColumn(column, dataset.fields[i])] as [ string, string | number])
+        )
 
         const result = {
             completionMessages: this.engine!.state.completionMessages,
