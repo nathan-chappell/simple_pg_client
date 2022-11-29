@@ -24,6 +24,7 @@ export class Engine {
     ) {}
 
     async start() {
+        console.debug('[Engine] starting')
         this.running = true
         this.readingPromise = this.startReading()
         this.writingPromise = this.startWriting()
@@ -34,12 +35,20 @@ export class Engine {
                 await this.delay
             } else {
                 const message = this.rxQueue.shift()!
-                await this.handleMessage(message)
+                // console.debug('[start] loop - handling message:')
+                // console.debug(JSON.stringify(message, null, 2))
+                try {
+                    this.handleMessage(message)
+                } catch (error) {
+                    console.error(error)
+                    throw error
+                }
             }
         }
     }
 
     handleMessage(message: IBackendMessage) {
+        console.debug('[Engine] handleMessage')
         const handler = this.protocol[this.state.name]
         if (typeof handler === 'function') {
             handler(this.state, message)
@@ -50,7 +59,9 @@ export class Engine {
 
     async startReading() {
         while (this.running) {
+            console.debug('[Engine] parseBackendMessage')
             const message = await parseBackendMessage(this.dataReader)
+            console.debug('[Engine] parseBackendMessage complete')
             this.rxQueue.push(message)
         }
     }
@@ -62,12 +73,14 @@ export class Engine {
                 await this.writeDelay
             } else {
                 const message = this.txQueue.shift()!
-                this.messageWriter.writeMessage(message)
+                await this.messageWriter.writeMessage(message)
+                console.debug('[engine] wrote')
             }
         }
     }
 
     stop(): Promise<unknown[]> {
+        console.debug('[Engine] stop')
         this.running = false
         this.messageWriter.release()
         if (this.delay !== null) this.delay.cancel()

@@ -9,6 +9,7 @@ import { IBackendMessage } from '../messages/messageFormats.generated.ts'
 import { isErrorResponse } from '../messages/messageFormats.generated.ts'
 import { IProtocol, ProtocolState } from './IProtocol.ts'
 
+const AUTHENTICATION_OK = 0
 const CLEARTEXT_PASSWORD = 3
 
 class ProtocolError extends Error {
@@ -24,8 +25,15 @@ class ProtocolError extends Error {
 const getErrorMessage = (m: ErrorResponse) =>
     m.fields.map(f => `(${String.fromCharCode(f[0])}) ${f[1]}`).join('; ')
 
+const log = (s: ProtocolState, m: IBackendMessage) => {
+    console.debug(`[Log] (${s.name})`)
+    console.debug(JSON.stringify(m, null, 2))
+}
+
 export const frontendProtocol: IProtocol = {
     Initial: (s, m) => {
+        // console.debug('[frontendProtocol] Initial')
+        log(s, m)
         if (isErrorResponse(m)) {
             throw new ProtocolError(s, m, getErrorMessage(m))
         } else if (isReadyForQuery(m)) {
@@ -33,12 +41,19 @@ export const frontendProtocol: IProtocol = {
         } else if (isIAuthenticationMessage(m)) {
             if (m.code === CLEARTEXT_PASSWORD) {
                 s.sendPassword()
+            } else if (m.code === AUTHENTICATION_OK) {
+                console.debug('[frontendProtocol.Initial] AUTHENTICATION_OK')
+            } else {
+                throw new ProtocolError(s, m, `AuthenticationMessage not supported: ${m.code}`)
             }
-            throw new ProtocolError(s, m, `AuthenticationMessage not supported: ${m.code}`)
         }
     },
-    Ready: (s, m) => {},
+    Ready: (s, m) => {
+        log(s, m)
+    },
     SimpleQuery: (s, m) => {
+        // console.debug('[frontendProtocol] SimpleQuery')
+        log(s, m)
         if (isReadyForQuery(m)) {
             s.transition('Ready')
         } else if (isErrorResponse(m)) {
@@ -49,5 +64,7 @@ export const frontendProtocol: IProtocol = {
             s.datasets[s.datasets.length - 1].rows.push(m.columns)
         }
     },
-    Terminating: (s, m) => {},
+    Terminating: (s, m) => {
+        log(s, m)
+    },
 }

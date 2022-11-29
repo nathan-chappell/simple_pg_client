@@ -71,7 +71,7 @@ export const toByteArray: (tv: TypedValue | TypedArray) => Byte[] = tv => {
 export class MessageWriterAdapter {
     writer: WritableStreamDefaultWriter
 
-    constructor(writable: WritableStream<Byte>) {
+    constructor(writable: WritableStream<Uint8Array>) {
         this.writer = writable.getWriter()
     }
 
@@ -80,6 +80,8 @@ export class MessageWriterAdapter {
     }
 
     writeMessage(message: NamedTypedValue[]): Promise<void> {
+        console.debug('[writeMessage]')
+        console.debug(JSON.stringify(message, null, 2))
         const lengthIndex = message.findIndex(tv => tv.name === 'length')
         if (lengthIndex === -1) {
             throw new Error(`[MessageWriterAdapter.writeMessage] all messages must have a "length" value`)
@@ -93,7 +95,10 @@ export class MessageWriterAdapter {
         const byteArrays = message.map(toByteArray)
         const length = byteArrays.reduce((acc, a) => acc + a.length, 0)
         byteArrays[lengthIndex] = toByteArray({ type: lengthType, value: length } as TypedValue)
+        console.debug(`[writeMessage] length: ${length}`)
+        console.debug(byteArrays[lengthIndex])
         const bytes = Uint8Array.from(byteArrays.flat())
+        console.debug(bytes)
         try {
             return this.writer.write(bytes)
         } catch (error) {

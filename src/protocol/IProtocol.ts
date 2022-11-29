@@ -20,7 +20,7 @@ const getActivator: () => TActivator = () => {
 class Waiter {
     activator: TActivator | null = null
 
-    get init(): Promise<void> {
+    get start(): Promise<void> {
         if (this.activator === null) {
             this.activator = getActivator()
         }
@@ -62,17 +62,20 @@ export class ProtocolState {
     transition(name: string) {
         this.name = name
         if (name in this.waiters) {
+            console.debug(`[Waiter] finishing ${name}`)
             this.waiters[name].finish()
+            delete this.waiters[name]
         }
     }
 
     waitFor(name: string): Promise<void> {
+        console.debug(`[Waiter] waitFor ${name}`)
         if (name in this.waiters) {
             return this.waiters[name].wait
         } else {
             const waiter = new Waiter()
             this.waiters[name] = waiter
-            return waiter.wait
+            return waiter.start
         }
     }
 }
