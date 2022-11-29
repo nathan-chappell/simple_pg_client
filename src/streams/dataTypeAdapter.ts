@@ -1,5 +1,5 @@
 import type { Byte } from './types.ts'
-import { readBytesWhile, readNBytes, yieldBytes } from './yieldBytes.ts'
+import { readBytesWhile, readNBytes, yieldBytes, YieldBytesError } from './yieldBytes.ts'
 
 export const stringToBytes = (s: string) => [...[...s].map(c => c.charCodeAt(0)), 0]
 
@@ -7,18 +7,28 @@ class NotAnError extends Error {}
 
 export class DataTypeAdapter {
     byteYielder: AsyncGenerator<number, void, undefined>
+    reader: ReadableStreamDefaultReader<Iterable<number>>
 
-    constructor(readable: ReadableStream) {
-        this.byteYielder = yieldBytes(readable)
+    constructor(public readable: ReadableStream) {
+        this.reader = readable.getReader({ mode: undefined })
+        this.byteYielder = yieldBytes(this.reader)
     }
 
     async release() {
         try {
+            // console.log('releasing byteYielder')
+            await this.reader.cancel()
+            // console.log('canceled')
             await this.byteYielder.throw(new NotAnError())
+            // console.log('released')
         } catch (error) {
-            if (error instanceof NotAnError) {
+            // console.log('error caught')
+            if (error instanceof NotAnError || error instanceof YieldBytesError) {
+                // console.log('successfully released')
                 return
             } else {
+                console.log('[un]successfully released')
+                console.log(error)
                 throw error
             }
         }

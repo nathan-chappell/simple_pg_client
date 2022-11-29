@@ -20,23 +20,20 @@ export class Engine {
         public messageWriter: MessageWriterAdapter,
         public protocol: IProtocol,
         public sendPassword: () => void,
-        public state: ProtocolState = new ProtocolState('Initial', sendPassword)
+        public state: ProtocolState = new ProtocolState('Initial', sendPassword),
     ) {}
 
     async start() {
-        console.debug('[Engine] starting')
         this.running = true
         this.readingPromise = this.startReading()
         this.writingPromise = this.startWriting()
 
-        while (true) {
+        while (this.running) {
             if (this.rxQueue.length === 0) {
                 this.delay = delay(this.delay_ms)
                 await this.delay
             } else {
                 const message = this.rxQueue.shift()!
-                // console.debug('[start] loop - handling message:')
-                // console.debug(JSON.stringify(message, null, 2))
                 try {
                     this.handleMessage(message)
                 } catch (error) {
@@ -48,22 +45,18 @@ export class Engine {
     }
 
     handleMessage(message: IBackendMessage) {
-        console.debug(`[Engine] handleMessage (${message.messageType})[${message.length}]`)
+        // console.debug(`[Engine] handleMessage (${message.messageType})[${message.length}]`)
         const handler = this.protocol[this.state.name]
         if (typeof handler === 'function') {
             handler(this.state, message)
         } else {
-            console.error('No handler found')
             throw new Error(`No handler found for state ${this.state.name}`)
         }
     }
 
     async startReading() {
         while (this.running) {
-            // console.debug('[Engine] parseBackendMessage')
             const message = await parseBackendMessage(this.dataReader)
-            console.debug('[Engine] parseBackendMessage complete')
-            console.debug(JSON.stringify(message, null, 0))
             this.rxQueue.push(message)
         }
     }
@@ -76,17 +69,31 @@ export class Engine {
             } else {
                 const message = this.txQueue.shift()!
                 await this.messageWriter.writeMessage(message)
-                console.debug('[engine] wrote')
             }
         }
     }
 
-    stop(): Promise<unknown[]> {
-        console.debug('[Engine] stop')
+    async stop(): Promise<void> {
+        // console.debug('[Engine] stop')
         this.running = false
         this.messageWriter.release()
+
         if (this.delay !== null) this.delay.cancel()
+        await this.delay
         if (this.writeDelay !== null) this.writeDelay.cancel()
-        return Promise.all([this.dataReader.release(), this.readingPromise, this.writingPromise])
+        await this.writeDelay
+
+        // console.debug('[Engine] delays awaited')
+
+        await this.dataReader.release()
+        // console.debug('[Engine] dataReader released')
+
+        // const logError = (e: Error) => { console.log(e) }
+        const logError = (e: Error) => { }
+        await Promise.all([
+            this.readingPromise?.catch(logError),
+            this.writingPromise?.catch(logError)
+        ])
+        // console.debug('[Engine] done reading/writing')
     }
 }

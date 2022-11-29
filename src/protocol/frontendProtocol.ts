@@ -1,5 +1,6 @@
 import {
     ErrorResponse,
+    isCommandComplete,
     isDataRow,
     isIAuthenticationMessage,
     isReadyForQuery,
@@ -16,7 +17,7 @@ class ProtocolError extends Error {
     constructor(
         public state: ProtocolState,
         public backendMessage: IBackendMessage,
-        public remark: string = ''
+        public remark: string = '',
     ) {
         super(`Error from ${state.name}: ${remark}`)
     }
@@ -26,8 +27,8 @@ const getErrorMessage = (m: ErrorResponse) =>
     m.fields.map(f => `(${String.fromCharCode(f[0])}) ${f[1]}`).join('; ')
 
 const log = (s: ProtocolState, m: IBackendMessage) => {
-    console.debug(`[Log] (${s.name})`)
-    console.debug(JSON.stringify(m, null, 0))
+    // console.debug(`[Log] (${s.name})`)
+    // console.debug(JSON.stringify(m, null, 0))
 }
 
 export const frontendProtocol: IProtocol = {
@@ -41,7 +42,7 @@ export const frontendProtocol: IProtocol = {
             if (m.code === CLEARTEXT_PASSWORD) {
                 s.sendPassword()
             } else if (m.code === AUTHENTICATION_OK) {
-                console.debug('[frontendProtocol.Initial] AUTHENTICATION_OK')
+                // console.debug('[frontendProtocol.Initial] AUTHENTICATION_OK')
             } else {
                 throw new ProtocolError(s, m, `AuthenticationMessage not supported: ${m.code}`)
             }
@@ -60,9 +61,11 @@ export const frontendProtocol: IProtocol = {
             s.datasets.push({ fields: m.fields, rows: [] })
         } else if (isDataRow(m)) {
             s.datasets[s.datasets.length - 1].rows.push(m.columns)
+        } else if (isCommandComplete(m)) {
+            s.completionMessages.push(m.message)
         }
     },
-    Terminating: (s, m) => {
+    Shutdown: (s, m) => {
         log(s, m)
     },
 }

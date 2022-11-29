@@ -32,11 +32,9 @@ export class Client {
     public configuration = defaultConfiguration
     public engine: Engine | null = null
     public enginePromise: Promise<void> | null = null
-    // public initPromise: Promise<void>
 
     constructor(public connector: TConnector, configuration: Partial<typeof defaultConfiguration>) {
         this.configuration = { ...this.configuration, ...configuration }
-        // this.initPromise = this.init()
     }
 
     async init() {
@@ -49,21 +47,35 @@ export class Client {
         this.engine = new Engine(dataReader, messageWriter, frontendProtocol, () => {
             messageWriter.writeMessage(makePasswordMessage(this.configuration.password))
         })
-        console.debug('[init] complete')
-        console.debug(readWritable.readable)
-        console.debug(readWritable.writable)
     }
 
-    startup() {
+    async startup() {
         if (!this.engine) throw new Error('[startup] failed due to engine failure.')
+        this.engine.state.transition('Initial')
         this.enginePromise = this.engine.start()
-        this.engine.state.name = 'Initial'
         this.engine.txQueue.push(
             makeStartupMessage([
                 ['user', this.configuration.username],
                 ['database', this.configuration.database],
             ]),
         )
+        await this.engine!.state.waitFor('Ready')
+    }
+
+    async shutdown(): Promise<void> {
+        if (!this.engine) throw new Error('[shutdown] failed due to engine failure.')
+        // console.log('shutting down')
+        this.engine.state.transition('Shutdown')
+        this.engine.txQueue.push(makeTerminate())
+        try {
+            await this.engine.stop()
+            // console.log('[shutdown] engine stopped')
+            await this.enginePromise
+        } catch (error) {
+            console.log('[shutdown] caught error')
+            console.log(error)
+        }
+        // console.log('engine stopped')
     }
 
     async query(
@@ -80,7 +92,7 @@ export class Client {
         )
 
         const result = {
-            completionMessages: this.engine!.state.completionMessages,
+            completionMessages: [...this.engine!.state.completionMessages],
             rowSets: this.engine!.state.datasets.map(mapDataset),
         }
 

@@ -15,14 +15,25 @@ export const client = new Client(connector, {
 
 export const testClient = async (client: Client) => {
     await client.init()
-    client.startup()
-    console.log('waiting for ready')
-    await client.engine!.state.waitFor('Ready')
-    console.log('sending query')
+    await client.startup()
     // const result = await client.query('select c from foo;')
-    const result = await client.query('SELECT * FROM foo;')
-    console.log('query complete')
-    console.log(JSON.stringify(result, null, 0))
+    for (const query of [
+        'DROP TABLE IF EXISTS foo;',
+        'CREATE TABLE foo(x INT PRIMARY KEY, y TEXT);',
+        "INSERT INTO foo VALUES (0, 'foo0'), (1, 'foo1');",
+        'SELECT * FROM foo;',
+        'DROP TABLE foo;',
+    ]) {
+        console.log('')
+        const result = await client.query(query)
+        console.log(query)
+        console.log(JSON.stringify(result, null, 0))
+    }
 }
 
-console.debug('Its a bright shiny day!')
+console.log('Its a bright shiny day!')
+
+await testClient(client)
+await client.shutdown()
+
+console.log('goodbye!')

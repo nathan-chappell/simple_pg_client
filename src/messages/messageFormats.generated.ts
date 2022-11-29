@@ -633,12 +633,21 @@ export function isNoData(baseMessage: IBackendMessage): baseMessage is NoData {
 
 // * @messageType: Identifies the message as a notice.
 // * @length: Length of message contents in bytes, including self.
+// * @fields: The message body consists of one or more identified fields, followed
+//         by a zero byte as a terminator.
 export interface NoticeResponse {
-    messageType: Byte1     // Byte1('N')
-    length:      Int32     // Int32
+    messageType: Byte1               // Byte1('N')
+    length:      Int32               // Int32
+    fields:      ByteStringPairs     // ByteStringPairs
 } // NoticeResponse
 
-export const parseNoticeResponse: (_adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<NoticeResponse> = async (_adapter, baseMessage) => baseMessage
+export const parseNoticeResponse: (adapter: DataTypeAdapter, baseMessage: IBackendMessage) => Promise<NoticeResponse> = async (adapter, baseMessage) => {
+    const fields: ByteStringPairs = await parseByteStringPairs(adapter)
+    return {
+        ...baseMessage,
+        fields,
+    }
+}
 
 export function isNoticeResponse(baseMessage: IBackendMessage): baseMessage is NoticeResponse {
     return baseMessage.messageType === 'N'

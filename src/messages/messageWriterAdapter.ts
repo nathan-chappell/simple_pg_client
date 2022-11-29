@@ -81,8 +81,8 @@ export class MessageWriterAdapter {
     }
 
     writeMessage(message: NamedTypedValue[]): Promise<void> {
-        console.debug('[writeMessage]')
-        console.debug(JSON.stringify(message, null, 0))
+        // console.debug('[writeMessage]')
+        // console.debug(JSON.stringify(message, null, 0))
         const lengthIndex = message.findIndex(tv => tv.name === 'length')
         if (lengthIndex === -1) {
             throw new Error(`[MessageWriterAdapter.writeMessage] all messages must have a "length" value`)
@@ -100,11 +100,8 @@ export class MessageWriterAdapter {
         const length = byteArrays.reduce((acc, a) => acc + a.length, 0) - lengthCorrection
         byteArrays[lengthIndex] = toByteArray({ type: lengthType, value: length } as TypedValue)
 
-        console.debug(`[writeMessage] length: ${length}`)
-        console.debug(byteArrays[lengthIndex])
-        
         const bytes = Uint8Array.from(byteArrays.flat())
-        console.debug(bytes)
+        // console.debug(bytes)
         
         try {
             return this.writer.write(bytes)

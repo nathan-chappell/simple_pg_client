@@ -916,6 +916,11 @@ export const formats: IMessageFormat[] = [
                 "type": "Int32",
                 "definition": "Length of message contents in bytes, including self.",
             },
+            {
+                "name": "fields",
+                "type": "ByteStringPairs",
+                "definition": "The message body consists of one or more identified fields, followed by a zero byte as a terminator.",
+            },
         ],
     },
     {

@@ -56,20 +56,18 @@ export class ProtocolState {
         public sendPassword: () => void,
         public datasets: IDataset[] = [],
         public completionMessages: string[] = [],
-        public waiters: Record<string, Waiter> = {}
+        public waiters: Record<string, Waiter> = {},
     ) {}
 
     transition(name: string) {
         this.name = name
         if (name in this.waiters) {
-            console.debug(`[Waiter] finishing ${name}`)
             this.waiters[name].finish()
             delete this.waiters[name]
         }
     }
 
     waitFor(name: string): Promise<void> {
-        console.debug(`[Waiter] waitFor ${name}`)
         if (name in this.waiters) {
             return this.waiters[name].wait
         } else {

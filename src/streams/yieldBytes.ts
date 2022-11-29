@@ -2,38 +2,26 @@ import type { Byte } from './types.ts'
 
 export class YieldBytesError extends Error {}
 
-export async function* yieldBytes(readable: ReadableStream) {
-    const reader: ReadableStreamDefaultReader<Iterable<number>> = readable.getReader({ mode: undefined })
+// export async function* yieldBytes(readable: ReadableStream) {
+export async function* yieldBytes(reader: ReadableStreamDefaultReader<Iterable<number>>) {
     try {
         while (true) {
-            // console.debug('[yieldBytes] reading...')
             const { value, done } = await reader.read()
-            // console.debug(`[yieldBytes] read: ${value} (${done})`)
+            // console.log(`[yieldBytes] read`)
             if (done) throw new YieldBytesError(`stream is done`)
             yield* value
         }
+    // } catch (error) {
+    //     console.log(`[yieldBytes] caught error: ${error}`)
     } finally {
+        // console.log(`[yieldBytes] releasing lock`)
         reader.releaseLock()
     }
 }
 
-// export async function readNBytes(byteYielder: AsyncGenerator<Byte, void, undefined>, n: number): Promise<Array<Byte>> {
-//     const bytes = [];
-//     let count = 0;
-//     while (count++ < n) {
-//         const { value, done } = await byteYielder.next();
-//         if (done) {
-//             throw new YieldBytesError(`stream is done after ${count}/${n} bytes`);
-//         } else {
-//             bytes.push(value);
-//         }
-//     }
-//     return bytes;
-// }
-
 export async function readBytesWhile(
     byteYielder: AsyncGenerator<Byte, void, undefined>,
-    test: (b: Byte) => boolean
+    test: (b: Byte) => boolean,
 ): Promise<Array<Byte>> {
     const bytes = []
     let count = 0

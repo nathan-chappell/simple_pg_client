@@ -6,7 +6,8 @@ Deno.test('yieldBytes', async () => {
     const readable = new ReadableStream({
         start: controller => controller.enqueue(bytes),
     })
-    const yielder = yieldBytes(readable)
+    const reader = readable.getReader({mode: undefined})
+    const yielder = yieldBytes(reader)
     const receivedBytes = await readNBytes(yielder, 4)
     assertEquals(receivedBytes.length, bytes.length)
     for (let i = 0; i < bytes.length; ++i) {
@@ -19,7 +20,8 @@ Deno.test('yieldBytes => error', async () => {
     const readable = new ReadableStream({
         start: controller => controller.enqueue(bytes),
     })
-    const yielder = yieldBytes(readable)
+    const reader = readable.getReader({mode: undefined})
+    const yielder = yieldBytes(reader)
     let error = null
     try {
         await Promise.all([readNBytes(yielder, 5), yielder.throw('unlock please')])
@@ -27,5 +29,6 @@ Deno.test('yieldBytes => error', async () => {
         error = e
     }
     // assertInstanceOf(error, Error)
+    console.log(error)
     assert(error === 'unlock please')
 })
