@@ -30,7 +30,7 @@ export class Engine {
         this.writingPromise = this.startWriting()
 
         while (true) {
-            if (this.rxQueue.length === 0 && this.txQueue.length === 0) {
+            if (this.rxQueue.length === 0) {
                 this.delay = delay(this.delay_ms)
                 await this.delay
             } else {

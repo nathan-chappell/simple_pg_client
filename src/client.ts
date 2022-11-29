@@ -1,4 +1,4 @@
-import { makePasswordMessage, makeQuery, makeStartupMessage } from './messages/messageFormats.generated.ts'
+import { makeExecute, makePasswordMessage, makeQuery, makeStartupMessage } from './messages/messageFormats.generated.ts'
 import { MessageWriterAdapter } from './messages/messageWriterAdapter.ts'
 import { Engine } from './protocol/engine.ts'
 import { frontendProtocol } from './protocol/frontendProtocol.ts'
@@ -62,6 +62,7 @@ export class Client {
         if (!this.engine) throw new Error('[query] failed due to engine failure.')
         this.engine.state.transition('SimpleQuery')
         this.engine.txQueue.push(makeQuery(query))
+        // this.engine.txQueue.push(makeExecute('',-1))
         await this.engine.state.waitFor('Ready')
         return {
             completionMessages: this.engine!.state.completionMessages,
